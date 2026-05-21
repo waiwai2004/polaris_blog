@@ -1,0 +1,10 @@
+{
+  "name": "polairs-blog",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Polairs‘s Blog - a pink indie game developer personal website.",
+  "scripts": {
+    "dev": "npx serve .",
+    "start": "npx serve ."
+  }
+}
