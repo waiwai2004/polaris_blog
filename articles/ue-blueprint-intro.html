@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unreal Engine 蓝图入门指南 | Polaris's Blog</title>
+  <meta name="description" content="从零开始了解 Unreal Engine 蓝图系统，适合初学者的入门指南。" />
+  <style>
+    :root {
+      --bg-1: #160719;
+      --bg-2: #2a0c2e;
+      --pink: #ff7ac8;
+      --rose: #ff4fa3;
+      --soft: #ffd7ef;
+      --violet: #b77cff;
+      --cyan: #8ae8ff;
+      --text: #fff7fb;
+      --muted: rgba(255, 247, 251, .72);
+      --glass: rgba(255, 255, 255, .095);
+      --line: rgba(255, 255, 255, .18);
+      --radius: 28px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      min-height: 100vh;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 8%, rgba(255, 122, 200, .35), transparent 34%),
+        radial-gradient(circle at 85% 20%, rgba(183, 124, 255, .25), transparent 28%),
+        radial-gradient(circle at 42% 72%, rgba(138, 232, 255, .18), transparent 26%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2) 45%, #190922);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: radial-gradient(circle at center, black, transparent 78%);
+      z-index: 0;
+    }
+
+    a { color: var(--pink); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .shell { position: relative; z-index: 4; }
+
+    .container { width: min(820px, calc(100% - 40px)); margin: 0 auto; }
+
+    .nav {
+      position: sticky;
+      top: 18px;
+      z-index: 10;
+      width: min(820px, calc(100% - 40px));
+      margin: 18px auto 0;
+      padding: 13px 16px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(26, 9, 30, .62);
+      backdrop-filter: blur(22px);
+      box-shadow: 0 18px 50px rgba(0,0,0,.22);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      color: var(--text);
+    }
+
+    .brand:hover { text-decoration: none; }
+
+    .logo {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 30% 25%, #fff, transparent 22%),
+        linear-gradient(135deg, var(--pink), var(--violet));
+      color: #2b082f;
+      box-shadow: 0 0 36px rgba(255, 122, 200, .75);
+    }
+
+    .nav-links { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 14px; }
+    .nav-links a { color: var(--muted); padding: 10px 14px; border-radius: 999px; transition: .25s ease; }
+    .nav-links a:hover { color: #fff; background: rgba(255,255,255,.1); text-decoration: none; }
+
+    .article-header {
+      padding: 88px 0 40px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--soft);
+      font-size: 14px;
+      font-weight: 700;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.08);
+      backdrop-filter: blur(16px);
+      margin-bottom: 32px;
+      transition: .25s ease;
+    }
+
+    .back-link:hover {
+      color: #fff;
+      background: rgba(255,255,255,.14);
+      text-decoration: none;
+    }
+
+    .article-meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .tag {
+      padding: 7px 10px;
+      border-radius: 999px;
+      color: var(--soft);
+      font-size: 12px;
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+
+    h1 {
+      font-size: clamp(32px, 5vw, 52px);
+      line-height: 1.15;
+      letter-spacing: -.04em;
+      max-width: 100%;
+      text-shadow: 0 0 46px rgba(255, 122, 200, .38);
+      margin-bottom: 18px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.8;
+      max-width: 680px;
+    }
+
+    .article-body {
+      padding: 40px 0 88px;
+    }
+
+    .article-body h2 {
+      font-size: clamp(24px, 3.5vw, 36px);
+      line-height: 1.2;
+      letter-spacing: -.03em;
+      margin: 48px 0 18px;
+      text-shadow: 0 0 30px rgba(255, 122, 200, .25);
+    }
+
+    .article-body h3 {
+      font-size: 22px;
+      margin: 36px 0 14px;
+      color: var(--soft);
+    }
+
+    .article-body p {
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 2;
+      margin-bottom: 18px;
+    }
+
+    .article-body ul, .article-body ol {
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 2.2;
+      margin: 0 0 18px 24px;
+    }
+
+    .article-body code {
+      background: rgba(255,255,255,.1);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 15px;
+      color: var(--cyan);
+    }
+
+    .article-body pre {
+      background: rgba(18, 7, 22, .7);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 18px;
+      padding: 22px 26px;
+      overflow-x: auto;
+      margin: 18px 0 24px;
+    }
+
+    .article-body pre code {
+      background: none;
+      padding: 0;
+      font-size: 14px;
+      line-height: 1.8;
+      color: var(--soft);
+    }
+
+    .tip-card {
+      padding: 22px 26px;
+      border-radius: 22px;
+      background:
+        linear-gradient(150deg, rgba(255,255,255,.12), rgba(255,255,255,.05)),
+        radial-gradient(circle at 80% 0%, rgba(255,122,200,.18), transparent 40%);
+      border: 1px solid rgba(255,255,255,.16);
+      margin: 28px 0;
+    }
+
+    .tip-card strong {
+      display: block;
+      color: var(--pink);
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+
+    .tip-card p {
+      margin-bottom: 0;
+    }
+
+    .divider {
+      border: none;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--line), transparent);
+      margin: 48px 0;
+    }
+
+    .article-nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+      padding: 40px 0 88px;
+    }
+
+    .nav-btn {
+      padding: 14px 20px;
+      border-radius: 999px;
+      font-weight: 800;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.09);
+      backdrop-filter: blur(16px);
+      color: var(--text);
+      transition: .25s ease;
+    }
+
+    .nav-btn:hover {
+      transform: translateY(-4px);
+      text-decoration: none;
+      box-shadow: 0 18px 55px rgba(255, 122, 200, .22);
+    }
+
+    footer {
+      padding: 42px 0 58px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 560px) {
+      .container { width: min(100% - 28px, 820px); }
+      .nav { width: min(100% - 28px, 820px); border-radius: 26px; }
+      .nav-links { display: none; }
+      .article-nav { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <nav class="nav">
+      <a href="../index.html" class="brand">
+        <span class="logo">P</span>
+        <span>Polaris's Blog</span>
+      </a>
+      <div class="nav-links">
+        <a href="../index.html#about">关于</a>
+        <a href="../index.html#projects">项目</a>
+        <a href="../index.html#blog">博客</a>
+        <a href="../index.html#contact">联系</a>
+      </div>
+    </nav>
+
+    <main>
+      <div class="container">
+        <article class="article-header">
+          <a href="../index.html#blog" class="back-link">← 返回博客</a>
+          <div class="article-meta">
+            <span class="tag">2026.05</span>
+            <span class="tag">Unreal Engine</span>
+            <span class="tag">蓝图</span>
+            <span class="tag">入门指南</span>
+          </div>
+          <h1>Unreal Engine 蓝图入门指南</h1>
+          <p class="subtitle">从零开始了解 UE 的可视化脚本系统，理解节点、事件和执行逻辑的基本概念。</p>
+        </article>
+
+        <div class="article-body">
+
+          <h2>什么是蓝图？</h2>
+          <p>
+            蓝图（Blueprint）是 Unreal Engine 的可视化脚本系统。它允许开发者通过连接节点来实现游戏逻辑，
+            而不需要编写一行 C++ 代码。对于独立游戏开发者来说，蓝图是快速原型和迭代的核心工具。
+          </p>
+          <p>
+            蓝图不是「简化版编程」，它是一套完整的逻辑系统，可以完成从简单交互到复杂 AI 的几乎所有游戏功能。
+            很多商业游戏的核心玩法就是纯蓝图实现的。
+          </p>
+
+          <div class="tip-card">
+            <strong>💡 为什么要学蓝图？</strong>
+            <p>
+              即使你计划用 C++ 开发，蓝图也是 UE 工作流中不可或缺的部分。很多功能（动画状态机、UI、关卡流程）
+              最适合用蓝图实现。学会蓝图能让你更高效地使用 UE。
+            </p>
+          </div>
+
+          <h2>蓝图的基本概念</h2>
+
+          <h3>1. 节点（Node）</h3>
+          <p>
+            每个节点代表一个操作或功能。比如「打印字符串」「移动角色」「播放动画」等。
+            节点之间通过「引脚」（Pin）连接，数据从一个节点流向下一个节点。
+          </p>
+
+          <h3>2. 事件（Event）</h3>
+          <p>
+            事件是蓝图的起点。最常见的是 <code>Event Begin Play</code>（游戏开始时执行）
+            和 <code>Event Tick</code>（每一帧执行）。你也可以自定义事件来响应玩家输入或游戏状态变化。
+          </p>
+
+          <h3>3. 执行引脚与数据引脚</h3>
+          <p>
+            蓝图中有两种引脚：
+          </p>
+          <ul>
+            <li><strong>执行引脚</strong>（白色箭头）：控制代码的执行顺序，像一条流水线</li>
+            <li><strong>数据引脚</strong>（彩色圆点）：传递具体的数据值，比如数字、文本、对象引用</li>
+          </ul>
+
+          <h3>4. 变量（Variable）</h3>
+          <p>
+            变量用来存储数据，和编程中的变量概念一样。UE 中的变量有类型（整数、浮点数、布尔值、字符串、对象引用等），
+            可以在蓝图面板中创建和管理。
+          </p>
+
+          <pre><code>// 等价的 C++ 代码
+float PlayerHealth = 100.0f;
+bool bIsAlive = true;
+FString PlayerName = TEXT("歪歪");</code></pre>
+
+          <hr class="divider" />
+
+          <h2>创建你的第一个蓝图</h2>
+
+          <h3>步骤一：创建蓝图类</h3>
+          <p>
+            在内容浏览器中右键 → Blueprint Class → 选择 Actor 作为父类。
+            命名为 <code>BP_MyFirstActor</code>。
+          </p>
+
+          <h3>步骤二：添加组件</h3>
+          <p>
+            打开蓝图编辑器，在 Components 面板点击 Add → 选择 Static Mesh。
+            在 Details 面板中选择一个网格体（比如 Cube）。
+          </p>
+
+          <h3>步骤三：编写逻辑</h3>
+          <p>
+            在事件图表（Event Graph）中：
+          </p>
+          <ol>
+            <li>找到 <code>Event Begin Play</code> 节点</li>
+            <li>右键搜索 <code>Print String</code>，添加节点</li>
+            <li>连接 Event Begin Play 的执行引脚到 Print String</li>
+            <li>在 Print String 的输入框填入 <code>Hello Unreal!</code></li>
+          </ol>
+
+          <div class="tip-card">
+            <strong>🎮 运行测��</strong>
+            <p>
+              把蓝图拖入关卡，按 Play 运行。屏幕左上角会显示「Hello Unreal!」。
+              恭喜，你完成了第一个蓝图程序！
+            </p>
+          </div>
+
+          <hr class="divider" />
+
+          <h2>蓝图学习的推荐路线</h2>
+
+          <ol>
+            <li><strong>基础操作</strong> — 节点创建、连接、变量使用、条件分支</li>
+            <li><strong>Actor 交互</strong> — 生成与销毁 Actor、碰撞检测、射线检测</li>
+            <li><strong>动画蓝图</strong> — 状态机、动画混合、通知（Notify）</li>
+            <li><strong>UI 系统</strong> — UMG 控件、绑定、动画</li>
+            <li><strong>AI 系统</strong> — 行为树、黑板、EQS</li>
+            <li><strong>优化与架构</strong> — 蓝图通信（接口、事件分发器）、性能优化</li>
+          </ol>
+
+          <h2>常见问题</h2>
+
+          <h3>蓝图和 C++ 怎么选？</h3>
+          <p>
+            不是二选一的关系。推荐做法是：用 C++ 写底层系统和性能敏感的代码，
+            用蓝图做玩法逻辑和快速迭代。UE 的设计就是让两者无缝协作的。
+          </p>
+
+          <h3>蓝图性能会不会很差？</h3>
+          <p>
+            对于大多数游戏来说，蓝图性能完全够用。真正需要优化的地方可以随时转为 C++。
+            不要过早优化，先让游戏跑起来更重要。
+          </p>
+
+          <h3>推荐学习资源？</h3>
+          <ul>
+            <li>官方文档：<code>dev.epicgames.com/documentation</code></li>
+            <li>YouTube：Unreal Sensei、Ryan Laley</li>
+            <li>B站：搜「UE5 蓝图入门」有很多中文教程</li>
+            <li>官方示例项目：Lyra Starter Game</li>
+          </ul>
+
+        </div>
+
+        <nav class="article-nav">
+          <a href="../index.html#blog" class="nav-btn">← 返回博客首页</a>
+        </nav>
+      </div>
+    </main>
+
+    <footer>
+      <div class="container">
+        © 2026 Polaris's Blog · Built with pink particles and indie-game dreams.
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
