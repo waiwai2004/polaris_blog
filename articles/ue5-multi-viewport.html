@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UE5 多视口分屏与相机白名单实现 | Polaris's Blog</title>
+  <meta name="description" content="在 Unreal Engine 中实现多视口分屏显示，并利用 Owner-based Visibility 机制实现相机白名单——让每个视口独立控制物体显隐性。" />
+  <style>
+    :root {
+      --bg-1: #160719;
+      --bg-2: #2a0c2e;
+      --pink: #ff7ac8;
+      --rose: #ff4fa3;
+      --soft: #ffd7ef;
+      --violet: #b77cff;
+      --cyan: #8ae8ff;
+      --text: #fff7fb;
+      --muted: rgba(255, 247, 251, .72);
+      --glass: rgba(255, 255, 255, .095);
+      --line: rgba(255, 255, 255, .18);
+      --radius: 28px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      min-height: 100vh;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 8%, rgba(255, 122, 200, .35), transparent 34%),
+        radial-gradient(circle at 85% 20%, rgba(183, 124, 255, .25), transparent 28%),
+        radial-gradient(circle at 42% 72%, rgba(138, 232, 255, .18), transparent 26%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2) 45%, #190922);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: radial-gradient(circle at center, black, transparent 78%);
+      z-index: 0;
+    }
+
+    a { color: var(--pink); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .shell { position: relative; z-index: 4; }
+
+    .container { width: min(820px, calc(100% - 40px)); margin: 0 auto; }
+
+    .nav {
+      position: sticky;
+      top: 18px;
+      z-index: 10;
+      width: min(820px, calc(100% - 40px));
+      margin: 18px auto 0;
+      padding: 13px 16px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(26, 9, 30, .62);
+      backdrop-filter: blur(22px);
+      box-shadow: 0 18px 50px rgba(0,0,0,.22);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      color: var(--text);
+    }
+
+    .brand:hover { text-decoration: none; }
+
+    .logo {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 30% 25%, #fff, transparent 22%),
+        linear-gradient(135deg, var(--pink), var(--violet));
+      color: #2b082f;
+      box-shadow: 0 0 36px rgba(255, 122, 200, .75);
+    }
+
+    .nav-links { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 14px; }
+    .nav-links a { color: var(--muted); padding: 10px 14px; border-radius: 999px; transition: .25s ease; }
+    .nav-links a:hover { color: #fff; background: rgba(255,255,255,.1); text-decoration: none; }
+
+    .article-header {
+      padding: 88px 0 40px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--soft);
+      font-size: 14px;
+      font-weight: 700;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.08);
+      backdrop-filter: blur(16px);
+      margin-bottom: 32px;
+      transition: .25s ease;
+    }
+
+    .back-link:hover {
+      color: #fff;
+      background: rgba(255,255,255,.14);
+      text-decoration: none;
+    }
+
+    .article-meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .tag {
+      padding: 7px 10px;
+      border-radius: 999px;
+      color: var(--soft);
+      font-size: 12px;
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+
+    h1 {
+      font-size: clamp(32px, 5vw, 52px);
+      line-height: 1.15;
+      letter-spacing: -.04em;
+      max-width: 100%;
+      text-shadow: 0 0 46px rgba(255, 122, 200, .38);
+      margin-bottom: 18px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.8;
+      max-width: 680px;
+    }
+
+    .article-body {
+      padding: 40px 0 88px;
+    }
+
+    .article-body h2 {
+      font-size: clamp(24px, 3.5vw, 36px);
+      line-height: 1.2;
+      letter-spacing: -.03em;
+      margin: 48px 0 18px;
+      text-shadow: 0 0 30px rgba(255, 122, 200, .25);
+    }
+
+    .article-body h3 {
+      font-size: 22px;
+      margin: 36px 0 14px;
+      color: var(--soft);
+    }
+
+    .article-body p {
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 2;
+      margin-bottom: 18px;
+    }
+
+    .article-body ul, .article-body ol {
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 2.2;
+      margin: 0 0 18px 24px;
+    }
+
+    .article-body code {
+      background: rgba(255,255,255,.1);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 15px;
+      color: var(--cyan);
+    }
+
+    .tip-card {
+      padding: 22px 26px;
+      border-radius: 22px;
+      background:
+        linear-gradient(150deg, rgba(255,255,255,.12), rgba(255,255,255,.05)),
+        radial-gradient(circle at 80% 0%, rgba(255,122,200,.18), transparent 40%);
+      border: 1px solid rgba(255,255,255,.16);
+      margin: 28px 0;
+    }
+
+    .tip-card strong {
+      display: block;
+      color: var(--pink);
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+
+    .tip-card p {
+      margin-bottom: 8px;
+    }
+
+    .tip-card p:last-child {
+      margin-bottom: 0;
+    }
+
+    .divider {
+      border: none;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--line), transparent);
+      margin: 48px 0;
+    }
+
+    .article-img {
+      width: 100%;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.12);
+      margin: 18px 0 28px;
+      box-shadow: 0 14px 48px rgba(0,0,0,.22);
+    }
+
+    .article-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 18px 0 28px;
+      font-size: 15px;
+      color: var(--muted);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .article-table th {
+      background: rgba(255,122,200,.15);
+      color: var(--soft);
+      font-weight: 700;
+      text-align: left;
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255,255,255,.12);
+    }
+
+    .article-table td {
+      padding: 10px 16px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+
+    .article-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .article-nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+      padding: 40px 0 88px;
+    }
+
+    .nav-btn {
+      padding: 14px 20px;
+      border-radius: 999px;
+      font-weight: 800;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.09);
+      backdrop-filter: blur(16px);
+      color: var(--text);
+      transition: .25s ease;
+    }
+
+    .nav-btn:hover {
+      transform: translateY(-4px);
+      text-decoration: none;
+      box-shadow: 0 18px 55px rgba(255, 122, 200, .22);
+    }
+
+    footer {
+      padding: 42px 0 58px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 560px) {
+      .container { width: min(100% - 28px, 820px); }
+      .nav { width: min(100% - 28px, 820px); border-radius: 26px; }
+      .nav-links { display: none; }
+      .article-nav { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <nav class="nav">
+      <a href="../index.html" class="brand">
+        <span class="logo">P</span>
+        <span>Polaris's Blog</span>
+      </a>
+      <div class="nav-links">
+        <a href="../index.html#about">关于</a>
+        <a href="../index.html#projects">项目</a>
+        <a href="../index.html#blog">博客</a>
+        <a href="../index.html#contact">联系</a>
+      </div>
+    </nav>
+
+    <main>
+      <div class="container">
+        <article class="article-header">
+          <a href="../index.html#blog" class="back-link">← 返回博客</a>
+          <div class="article-meta">
+            <span class="tag">2026.05</span>
+            <span class="tag">Unreal Engine 5.6</span>
+            <span class="tag">多视口</span>
+            <span class="tag">相机白名单</span>
+          </div>
+          <h1>UE5 多视口分屏与相机白名单实现</h1>
+          <p class="subtitle">本文介绍如何在 Unreal Engine 中实现分屏显示（多视口），并利用 Owner-based Visibility 机制让每个视口独立控制物体的显隐性。</p>
+        </article>
+
+        <div class="article-body">
+
+          <img class="article-img" src="images/ebad54096fff94a0a51fb0e659cfc268.png" alt="多视口分屏效果预览" />
+
+          <p>
+            本文将介绍如何在 Unreal Engine 中实现分屏显示（多视口），并且让每个视口中物体的显隐性不同。效果如上图所示：三个视口各自独立渲染，同一个场景中的不同物体在不同视口中的可见性是不同的。图中标注的含义：
+          </p>
+          <ul>
+            <li><strong>A and B</strong> — 对 ViewPawn A 和 B 的视口都可见</li>
+            <li><strong>Only_A</strong> — 仅对 ViewPawn A 的视口可见</li>
+            <li><strong>Only_B / Only_C</strong> — 同理，仅对对应视口可见</li>
+            <li><strong>ABC</strong> — 对所有视口都可见</li>
+          </ul>
+
+          <p><strong>核心思路：</strong></p>
+          <ul>
+            <li><strong>分屏实现</strong>：通过注册 Local Player，在项目设置中开启分屏（Split Screen），然后给每个 Player 绑定不同的 Camera。</li>
+            <li><strong>显隐性控制（白名单）</strong>：利用 UE 内置的 <strong>Owner-based Visibility（基于所有者的可见性）</strong> 机制，通过设置 Actor 的 Owner 并配合 <code>Only Owner See</code> / <code>Owner No See</code> 节点，实现对不同 Player 视口的独立显隐控制。</li>
+          </ul>
+
+          <hr class="divider" />
+
+          <h2>一、多视口的实现</h2>
+
+          <h3>1.1 创建蓝图类 BP_ViewPawn</h3>
+          <p>
+            新建一个蓝图类，继承自 <strong>Pawn</strong>。
+          </p>
+
+          <div class="tip-card">
+            <strong>💡 为什么选 Pawn 而不是 Actor？</strong>
+            <p>
+              Pawn 是 Actor 的子类，专门作为"可被 Controller 控制的实体"设计，自带 Possess/Unpossess 接口，可以直接绑定 Local Player。如果用 Actor，需要额外实现相关功能才能作为 Local Player 的控制目标，不如 Pawn 直接方便。
+            </p>
+          </div>
+
+          <p>在 BP_ViewPawn 下挂载一个 <strong>Camera</strong> 组件即可。</p>
+          <p>
+            在关卡中放入三个 BP_ViewPawn 实例，分别命名为：
+          </p>
+          <ul>
+            <li><code>ViewPawn_A</code></li>
+            <li><code>ViewPawn_B</code></li>
+            <li><code>ViewPawn_C</code></li>
+          </ul>
+
+          <h3>1.2 创建蓝图类 BP_MultiCamManager</h3>
+          <p>
+            新建一个蓝图类 BP_MultiCamManager（继承 Actor），用于管理多视口的创建和绑定。
+          </p>
+          <p>新建三个变量，分别引用三个 ViewPawn：</p>
+
+          <img class="article-img" src="images/Pasted image 20260525142920.png" alt="BP_MultiCamManager 变量配置" />
+
+          <p>变量名分别为 <code>ViewPawnA</code>、<code>ViewPawnB</code>、<code>ViewPawnC</code>，类型均为 <strong>BP_View Pawn</strong>。</p>
+
+          <h3>1.3 注册 Local Player 并绑定相机</h3>
+          <p>
+            在 BP_MultiCamManager 的 <strong>BeginPlay</strong> 事件中：
+          </p>
+          <ol>
+            <li>使用 <strong>Create Local Player</strong> 节点注册两个新的 Local Player（Controller Id 分别设为 1 和 2；第一个 Player 默认已存在，所以只需再注册两个，总共三个）。</li>
+            <li>使用 <strong>Set View Target with Blend</strong> 节点，将每个 Player 与对应的 ViewPawn 绑定。</li>
+          </ol>
+
+          <img class="article-img" src="images/Pasted image 20260525140346.png" alt="Create Local Player 节点" />
+
+          <img class="article-img" src="images/Pasted image 20260525141009.png" alt="Set View Target with Blend 绑定" />
+
+          <p>
+            绑定逻辑重复三次，分别对应 Player 0 → ViewPawn_A、Player 1 → ViewPawn_B、Player 2 → ViewPawn_C。上图为其中一次绑定的细节：Get Player Controller（Player Index = 0）的返回值连接到 Set View Target with Blend 的 Target，New View Target 设为 ViewPawn_A。
+          </p>
+
+          <h3>1.4 项目设置：开启分屏</h3>
+          <p>
+            打开 <strong>Edit → Project Settings → Maps &amp; Modes</strong>，确保以下设置：
+          </p>
+          <ul>
+            <li><strong>Use Split Screen</strong> 选项已勾选</li>
+            <li>根据需要的视口数量，在对应的分屏布局选项中调整。本教程使用三视口，可在 <strong>Three Player Splitscreen Layout</strong> 中选择合适的布局方式</li>
+          </ul>
+
+          <img class="article-img" src="images/Pasted image 20260525141408.png" alt="项目设置开启分屏" />
+
+          <h3>1.5 放入关卡并配置</h3>
+          <p>
+            将 BP_MultiCamManager 拖入关卡中，在 Details 面板中把三个变量分别设置为场景中的 ViewPawn_A、ViewPawn_B 和 ViewPawn_C：
+          </p>
+
+          <img class="article-img" src="images/Pasted image 20260525143347.png" alt="关卡中配置 ViewPawn 引用" />
+
+          <p>运行游戏，即可看到三视口分屏效果。</p>
+
+          <hr class="divider" />
+
+          <h2>二、实现相机白名单（视口级显隐性）</h2>
+
+          <p>
+            分屏实现了，但默认情况下每个视口看到的画面是完全相同的。要实现「不同视口看到不同物体」，就需要对每个视口做独立的显隐性控制。
+          </p>
+
+          <p>
+            本方案使用 UE 引擎内置的 <strong>Owner-based Visibility（基于所有者的可见性）</strong> 机制。其原理是：每个 Actor 可以设置一个 Owner（所有者），然后通过 <code>Only Owner See</code> 和 <code>Owner No See</code> 节点精确控制该 Actor 的组件对哪些 Player 可见。这正是为多人分屏场景量身打造的功能。
+          </p>
+
+          <p>
+            <strong>基本思路：</strong> 给需要控制显隐的 Actor 打上 Tag（标签名为 <code>CamA</code>、<code>CamB</code> 或 <code>CamC</code>），在 BeginPlay 时通过 Get All Actors with Tag 获取所有相关 Actor，然后调用自定义函数 <strong>Apply Visibility Rule</strong>，在该函数内通过 <strong>Actor Has Tag</strong> 判断该 Actor 应该被哪些视口看到，再用 <strong>Set Owner</strong> 将 Actor 的 Owner 设为对应的 ViewPawn，最后调用 <strong>Set Components Only Owner See</strong> / <strong>Set Components Owner No See</strong> 来控制可见性。这种方式只在回合开始时判断一次，适用于显隐关系固定的场景。
+          </p>
+
+          <h3>2.1 给 Actor 添加 Tag</h3>
+          <p>
+            在需要控制显隐的 Actor 的 Details 面板 → <strong>Actor → Tags</strong> 属性中，添加对应的标签：
+          </p>
+          <ul>
+            <li>如果某个 Actor 只希望被 ViewPawn_A 的视口看到 → 打上 <code>CamA</code> 标签</li>
+            <li>如果某个 Actor 只希望被 ViewPawn_B 的视口看到 → 打上 <code>CamB</code> 标签</li>
+            <li>如果某个 Actor 只希望被 ViewPawn_C 的视口看到 → 打上 <code>CamC</code> 标签</li>
+            <li>如果某个 Actor 希望被多个视口看到 → 同时打上多个标签（如同时打 <code>CamA</code> 和 <code>CamB</code>）</li>
+          </ul>
+
+          <img class="article-img" src="images/Pasted image 20260525143845.png" alt="给 Actor 添加 Tag" />
+
+          <p>上图示例：Sphere_A_B 这个 Actor 同时打了 <code>CamA</code> 和 <code>CamB</code> 两个标签，表示它应该对 ViewPawn A 和 ViewPawn B 的视口都可见。</p>
+
+          <h3>2.2 获取带标签的 Actor 并遍历</h3>
+          <p>
+            使用 <strong>Get All Actors with Tag</strong> 节点获取所有含有指定标签的 Actor（如 <code>CamA</code>），然后用 <strong>For Each Loop</strong> 遍历，对每个 Actor 调用自定义函数 <strong>Apply Visibility Rule</strong> 进行显隐性处理。
+          </p>
+
+          <img class="article-img" src="images/Pasted image 20260525144035.png" alt="获取带标签的 Actor 并遍历" />
+
+          <h3>2.3 显隐性判断函数 — Apply Visibility Rule</h3>
+          <p>
+            在 <strong>Apply Visibility Rule</strong> 函数中，建立以下局部变量：
+          </p>
+
+          <img class="article-img" src="images/Pasted image 20260525144203.png" alt="Apply Visibility Rule 变量定义" />
+
+          <table class="article-table">
+            <thead>
+              <tr>
+                <th>变量</th>
+                <th>类型</th>
+                <th>用途</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>bA</td><td>Boolean</td><td>该 Actor 是否应对 ViewPawn A 可见</td></tr>
+              <tr><td>bB</td><td>Boolean</td><td>该 Actor 是否应对 ViewPawn B 可见</td></tr>
+              <tr><td>bC</td><td>Boolean</td><td>该 Actor 是否应对 ViewPawn C 可见</td></tr>
+              <tr><td>target</td><td>Actor</td><td>当前正在处理的 Actor</td></tr>
+              <tr><td>VisibilityMask</td><td>Integer</td><td>由 bA/bB/bC 计算得出的组合值（0~7）</td></tr>
+            </tbody>
+          </table>
+
+          <p>
+            首先验证输入有效性，然后用三个 <strong>Actor Has Tag</strong> 节点分别判断该 Actor 是否包含 <code>CamA</code>、<code>CamB</code>、<code>CamC</code> 标签，结果分别存入布尔变量 A、B、C：
+          </p>
+
+          <img class="article-img" src="images/Pasted image 20260525144245.png" alt="Actor Has Tag 判断" />
+
+          <p>流程为：先 Is Valid 检查输入对象是否有效 → SET target；然后并行执行三个 Actor Has Tag 节点（Tag 分别为 CamA/CamB/CamC）→ 将结果 SET 到 A/B/C 三个布尔变量。</p>
+
+          <h3>2.4 巧妙的布尔权重方案</h3>
+          <p>
+            因为三个 Player 各有一个布尔值表示「是否在当前视口中可见」，一共有 <strong>2³ = 8 种情况</strong>（包括全不可见）。如果用 AND 节点逐个连接三个布尔值来判断，节点会非常复杂。
+          </p>
+          <p>
+            这里使用了一个巧妙的方法——<strong>给每个布尔值赋予权重，用 Select Int 节点计算组合值</strong>：
+          </p>
+
+          <img class="article-img" src="images/Pasted image 20260525144420.png" alt="Select Int 权重计算" />
+
+          <p>
+            使用三个 <strong>Select Int</strong> 节点：
+          </p>
+          <ul>
+            <li>第一个：如果 A 为 true 返回 <strong>1</strong>，否则返回 <strong>0</strong></li>
+            <li>第二个：如果 B 为 true 返回 <strong>2</strong>，否则返回 <strong>0</strong></li>
+            <li>第三个：如果 C 为 true 返回 <strong>4</strong>，否则返回 <strong>0</strong></li>
+          </ul>
+          <p>
+            三个返回值相加后得到一个 <strong>0~7</strong> 的数字（即 VisibilityMask），每个数字唯一对应一种可见性组合：
+          </p>
+
+          <table class="article-table">
+            <thead>
+              <tr>
+                <th>VisibilityMask</th>
+                <th>A可见</th>
+                <th>B可见</th>
+                <th>C可见</th>
+                <th>含义</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>0</td><td>✗</td><td>✗</td><td>✗</td><td>全不可见</td></tr>
+              <tr><td>1</td><td>✓</td><td>✗</td><td>✗</td><td>仅 A</td></tr>
+              <tr><td>2</td><td>✗</td><td>✓</td><td>✗</td><td>仅 B</td></tr>
+              <tr><td>3</td><td>✓</td><td>✓</td><td>✗</td><td>A和B</td></tr>
+              <tr><td>4</td><td>✗</td><td>✗</td><td>✓</td><td>仅 C</td></tr>
+              <tr><td>5</td><td>✓</td><td>✗</td><td>✓</td><td>A和C</td></tr>
+              <tr><td>6</td><td>✗</td><td>✓</td><td>✓</td><td>B和C</td></tr>
+              <tr><td>7</td><td>✓</td><td>✓</td><td>✓</td><td>全部可见</td></tr>
+            </tbody>
+          </table>
+
+          <p>然后使用 <strong>Switch on int</strong> 节点，针对每种情况进行分类处理：</p>
+
+          <img class="article-img" src="images/Pasted image 20260525144550.png" alt="Switch on int 分支" />
+
+          <p>Switch on int 的 8 个分支（0~7），每个分支调用不同的显隐处理函数。</p>
+
+          <h3>2.5 具体的显隐处理 — SetComponentsOwnerNoSee</h3>
+          <p>
+            针对 Switch 的每种情况，分别调用 <strong>SetComponentsOwnerNoSee</strong> 等函数来设置组件的显隐规则。本方案的核心在于使用 UE 的 <strong>Owner-based Visibility</strong> 机制。
+          </p>
+          <p>函数内部的节点连接方式如下：</p>
+
+          <img class="article-img" src="images/Pasted image 20260525144704.png" alt="显隐处理函数节点" />
+
+          <h4>用到的关键节点说明</h4>
+
+          <table class="article-table">
+            <thead>
+              <tr>
+                <th>节点</th>
+                <th>作用</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Set Owner</strong></td><td>设置 Actor 的 Owner 为对应的 ViewPawn，这是后续显隐控制的基础</td></tr>
+              <tr><td><strong>Get Components By Class</strong></td><td>获取 Actor 下所有的 PrimitiveComponent（Mesh 等），因为显隐控制是在组件级别生效的</td></tr>
+              <tr><td><strong>Cast To PrimitiveComponent</strong></td><td>将组件转换为 PrimitiveComponent 类型</td></tr>
+              <tr><td><strong>Set Only Owner See</strong></td><td>让该组件<strong>只对其 Owner 所在的 Player 可见</strong>，其他 Player 看不到</td></tr>
+              <tr><td><strong>Set Owner No See</strong></td><td>让该组件<strong>对其 Owner 所在的 Player 不可见</strong>，其他 Player 能看到</td></tr>
+              <tr><td><strong>Set Components Visible to All</strong></td><td>让该组件对所有 Player 都可见</td></tr>
+            </tbody>
+          </table>
+
+          <h4>处理流程</h4>
+          <ol>
+            <li>先用 <strong>Set Owner</strong> 把目标 Actor 的 Owner 设置为对应的 ViewPawn（如 ViewPawn_A）</li>
+            <li>用 <strong>Get Components By Class</strong> 获取该 Actor 的所有 PrimitiveComponent</li>
+            <li>遍历每个组件（For Each Loop），Cast To PrimitiveComponent 后根据需要调用：
+              <ul>
+                <li><strong>Set Only Owner See</strong> — 只对 Owner 可见（如 case 0/1/2 中让某 Actor 只被一个视口看到）</li>
+                <li><strong>Set Owner No See</strong> — 对 Owner 不可见（如 case 3/4/5/6 中让某 Actor 对某个视口隐藏）</li>
+                <li><strong>Set Components Visible to All</strong> — 对所有 Player 可见（case 7）</li>
+              </ul>
+            </li>
+          </ol>
+
+          <div class="tip-card">
+            <strong>💡 为什么用 Owner-based Visibility 而不是 Set Visibility？</strong>
+            <p><strong>Owner-based Visibility（Only Owner See / Owner No See）</strong>：这是 UE 专门为多人游戏设计的机制，原生支持按 Player 控制显隐，不需要手动处理网络复制问题。</p>
+            <p><strong>Set Visibility</strong>：虽然也可以用，但它不是专门为多玩家设计的，在某些网络场景下可能需要额外处理。</p>
+            <p><strong>Set Actor Hidden In Game</strong>：会被网络复制（replicated），对所有 Player 同时生效，无法实现"只对某个视口隐藏"的效果。</p>
+          </div>
+
+          <h3>额外提示：消除残留阴影</h3>
+          <p>
+            如果发现被隐藏的 Actor 还留有一点淡淡的影子，可以关闭该 Actor 上 Mesh 组件的 <strong>Affect Distance Field Lighting</strong> 属性。距离场光照（Distance Field Lighting）会在物体周围产生柔和的阴影效果，即使物体本身被隐藏，这个阴影可能仍然存在。关闭后即可彻底消除残留影子的痕迹。
+          </p>
+
+          <hr class="divider" />
+
+          <h2>三、总结</h2>
+
+          <table class="article-table">
+            <thead>
+              <tr>
+                <th>步骤</th>
+                <th>说明</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>创建 BP_ViewPawn</td><td>继承 Pawn，挂载 Camera，放入关卡三个实例（ViewPawn_A/B/C）</td></tr>
+              <tr><td>创建 BP_MultiCamManager</td><td>管理 Local Player 注册和 Camera 绑定，定义 ViewPawnA/B/C 三个变量</td></tr>
+              <tr><td>项目设置开启 Split Screen</td><td>确保 Use Splitscreen 已勾选，选择合适的分屏布局</td></tr>
+              <tr><td>给 Actor 打 Tag</td><td>在 Actor Tags 中添加 CamA / CamB / CamC 标签，标记归属</td></tr>
+              <tr><td>Apply Visibility Rule 函数</td><td>用 Actor Has Tag 判断三个布尔值，Select Int 计算权重组合值（0~7）</td></tr>
+              <tr><td>Switch on int 分支</td><td>8 种情况分别调用 SetComponentsOwnerNoSee 等函数</td></tr>
+              <tr><td>Set Owner + Only Owner See / Owner No See</td><td>使用 UE 内置的 Owner-based Visibility 机制控制各视口的独立显隐</td></tr>
+            </tbody>
+          </table>
+
+          <p>通过以上步骤，就可以在 UE 中实现多视口分屏，且每个视口拥有独立的物体显隐性控制。</p>
+
+        </div>
+
+        <nav class="article-nav">
+          <a href="../index.html#blog" class="nav-btn">← 返回博客首页</a>
+        </nav>
+      </div>
+    </main>
+
+    <footer>
+      <div class="container">
+        © 2026 Polaris's Blog · Built with pink particles and indie-game dreams.
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
