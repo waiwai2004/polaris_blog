@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>基于 SceneCapture 的多视口显隐方案 | Polaris's Blog</title>
+  <meta name="description" content="利用 SceneCaptureComponent 的 Hidden Actors / Show Only Actors 机制，突破 Owner 数量限制，实现任意数量的视口独立显隐控制。" />
+  <style>
+    :root {
+      --bg-1: #160719;
+      --bg-2: #2a0c2e;
+      --pink: #ff7ac8;
+      --rose: #ff4fa3;
+      --soft: #ffd7ef;
+      --violet: #b77cff;
+      --cyan: #8ae8ff;
+      --text: #fff7fb;
+      --muted: rgba(255, 247, 251, .72);
+      --glass: rgba(255, 255, 255, .095);
+      --line: rgba(255, 255, 255, .18);
+      --radius: 28px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      min-height: 100vh;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 8%, rgba(255, 122, 200, .35), transparent 34%),
+        radial-gradient(circle at 85% 20%, rgba(183, 124, 255, .25), transparent 28%),
+        radial-gradient(circle at 42% 72%, rgba(138, 232, 255, .18), transparent 26%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2) 45%, #190922);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: radial-gradient(circle at center, black, transparent 78%);
+      z-index: 0;
+    }
+
+    a { color: var(--pink); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .shell { position: relative; z-index: 4; }
+
+    .container { width: min(820px, calc(100% - 40px)); margin: 0 auto; }
+
+    .nav {
+      position: sticky;
+      top: 18px;
+      z-index: 10;
+      width: min(820px, calc(100% - 40px));
+      margin: 18px auto 0;
+      padding: 13px 16px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(26, 9, 30, .62);
+      backdrop-filter: blur(22px);
+      box-shadow: 0 18px 50px rgba(0,0,0,.22);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      color: var(--text);
+    }
+
+    .brand:hover { text-decoration: none; }
+
+    .logo {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 30% 25%, #fff, transparent 22%),
+        linear-gradient(135deg, var(--pink), var(--violet));
+      color: #2b082f;
+      box-shadow: 0 0 36px rgba(255, 122, 200, .75);
+    }
+
+    .nav-links { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 14px; }
+    .nav-links a { color: var(--muted); padding: 10px 14px; border-radius: 999px; transition: .25s ease; }
+    .nav-links a:hover { color: #fff; background: rgba(255,255,255,.1); text-decoration: none; }
+
+    .article-header {
+      padding: 88px 0 40px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--soft);
+      font-size: 14px;
+      font-weight: 700;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.08);
+      backdrop-filter: blur(16px);
+      margin-bottom: 32px;
+      transition: .25s ease;
+    }
+
+    .back-link:hover {
+      color: #fff;
+      background: rgba(255,255,255,.14);
+      text-decoration: none;
+    }
+
+    .article-meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .tag {
+      padding: 7px 10px;
+      border-radius: 999px;
+      color: var(--soft);
+      font-size: 12px;
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+
+    h1 {
+      font-size: clamp(32px, 5vw, 52px);
+      line-height: 1.15;
+      letter-spacing: -.04em;
+      max-width: 100%;
+      text-shadow: 0 0 46px rgba(255, 122, 200, .38);
+      margin-bottom: 18px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.8;
+      max-width: 680px;
+    }
+
+    .article-body {
+      padding: 40px 0 88px;
+    }
+
+    .article-body h2 {
+      font-size: clamp(24px, 3.5vw, 36px);
+      line-height: 1.2;
+      letter-spacing: -.03em;
+      margin: 48px 0 18px;
+      text-shadow: 0 0 30px rgba(255, 122, 200, .25);
+    }
+
+    .article-body p {
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 2;
+      margin-bottom: 18px;
+    }
+
+    .tip-card {
+      padding: 22px 26px;
+      border-radius: 22px;
+      background:
+        linear-gradient(150deg, rgba(255,255,255,.12), rgba(255,255,255,.05)),
+        radial-gradient(circle at 80% 0%, rgba(255,122,200,.18), transparent 40%);
+      border: 1px solid rgba(255,255,255,.16);
+      margin: 28px 0;
+    }
+
+    .tip-card strong {
+      display: block;
+      color: var(--pink);
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+
+    .tip-card p {
+      margin-bottom: 0;
+    }
+
+    .divider {
+      border: none;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--line), transparent);
+      margin: 48px 0;
+    }
+
+    .article-nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+      padding: 40px 0 88px;
+    }
+
+    .nav-btn {
+      padding: 14px 20px;
+      border-radius: 999px;
+      font-weight: 800;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.09);
+      backdrop-filter: blur(16px);
+      color: var(--text);
+      transition: .25s ease;
+    }
+
+    .nav-btn:hover {
+      transform: translateY(-4px);
+      text-decoration: none;
+      box-shadow: 0 18px 55px rgba(255, 122, 200, .22);
+    }
+
+    footer {
+      padding: 42px 0 58px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 560px) {
+      .container { width: min(100% - 28px, 820px); }
+      .nav { width: min(100% - 28px, 820px); border-radius: 26px; }
+      .nav-links { display: none; }
+      .article-nav { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <nav class="nav">
+      <a href="../index.html" class="brand">
+        <span class="logo">P</span>
+        <span>Polaris's Blog</span>
+      </a>
+      <div class="nav-links">
+        <a href="../index.html#about">关于</a>
+        <a href="../index.html#projects">项目</a>
+        <a href="../index.html#blog">博客</a>
+        <a href="../index.html#contact">联系</a>
+      </div>
+    </nav>
+
+    <main>
+      <div class="container">
+        <article class="article-header">
+          <a href="../index.html#blog" class="back-link">← 返回博客</a>
+          <div class="article-meta">
+            <span class="tag">2026.05</span>
+            <span class="tag">Unreal Engine 5.6</span>
+            <span class="tag">SceneCapture</span>
+            <span class="tag">多视口白名单</span>
+          </div>
+          <h1>基于 SceneCapture 的多视口显隐方案</h1>
+          <p class="subtitle">利用 SceneCaptureComponent 的 Hidden Actors / Show Only Actors 机制，突破 Owner 数量限制，实现任意数量的视口独立显隐控制。</p>
+        </article>
+
+        <div class="article-body">
+
+          <div class="tip-card">
+            <strong>🚧 文章编写中</strong>
+            <p>本文正在编写中，内容即将补充。敬请期待！</p>
+          </div>
+
+          <p>
+            在上一篇《<a href="ue5-multi-viewport.html">UE5 多视口分屏与相机白名单实现</a>》中，我们使用了 Owner-based Visibility 方案来实现三视口的独立显隐控制。但该方案受限于每个 Actor 只能有一个 Owner，无法覆盖更复杂的多视口组合情况。
+          </p>
+          <p>
+            本文将介绍一种更灵活的方案：基于 <strong>SceneCaptureComponent2D</strong> 的 <strong>Hidden Actors</strong>（隐藏所有，只显示指定的）和 <strong>Show Only Actors</strong>（只显示指定的）机制。这种方式可以为每个视口独立配置可见/隐藏的 Actor 列表，不再受 Owner 数量限制，支持任意数量的视口和任意组合的显隐规则。
+          </p>
+
+          <hr class="divider" />
+
+          <h2>核心概念</h2>
+          <p>
+            <strong>SceneCaptureComponent2D</strong> 是 UE 中用于将场景渲染到纹理的组件。它提供了两个关键属性：
+          </p>
+          <ul style="color: var(--muted); font-size: 17px; line-height: 2.2; margin: 0 0 18px 24px;">
+            <li><strong>Hidden Actors</strong>：对该 SceneCapture 隐藏的 Actor 列表</li>
+            <li><strong>Show Only Actors</strong>：该 SceneCapture 只显示的 Actor 列表（启用后其他 Actor 全部隐藏）</li>
+          </ul>
+          <p>通过为每个视口创建一个 SceneCaptureComponent2D，并分别配置其 Hidden / Show Only 列表，即可实现精确的多视口白名单控制。</p>
+
+          <hr class="divider" />
+
+          <p style="text-align: center; color: var(--muted); padding: 40px 0;">
+            —— 文章内容持续更新中，敬请关注 ——
+          </p>
+
+        </div>
+
+        <nav class="article-nav">
+          <a href="ue5-multi-viewport.html" class="nav-btn">← 上一篇：多视口分屏与相机白名单</a>
+          <a href="../index.html#blog" class="nav-btn">返回博客首页 →</a>
+        </nav>
+      </div>
+    </main>
+
+    <footer>
+      <div class="container">
+        © 2026 Polaris's Blog · Built with pink particles and indie-game dreams.
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

@@ -583,8 +583,8 @@
             <li>用 <strong>Get Components By Class</strong> 获取该 Actor 的所有 PrimitiveComponent</li>
             <li>遍历每个组件（For Each Loop），Cast To PrimitiveComponent 后根据需要调用：
               <ul>
-                <li><strong>Set Only Owner See</strong> — 只对 Owner 可见（如 case 0/1/2 中让某 Actor 只被一个视口看到）</li>
-                <li><strong>Set Owner No See</strong> — 对 Owner 不可见（如 case 3/4/5/6 中让某 Actor 对某个视口隐藏）</li>
+                <li><strong>Set Only Owner See</strong> — 只对 Owner 可见（如 case 1/2/4 中让某 Actor 只被一个视口看到）</li>
+                <li><strong>Set Owner No See</strong> — 对 Owner 不可见（如 case 1/5/6 中让某 Actor 对某个视口隐藏）</li>
                 <li><strong>Set Components Visible to All</strong> — 对所有 Player 可见（case 7）</li>
               </ul>
             </li>
@@ -625,6 +625,24 @@
           </table>
 
           <p>通过以上步骤，就可以在 UE 中实现多视口分屏，且每个视口拥有独立的物体显隐性控制。</p>
+
+          <hr class="divider" />
+
+          <h2>四、本方案的局限性</h2>
+
+          <p>
+            本方案基于 Owner-based Visibility 实现，每个 Actor 只能设置一个 Owner，因此只能表达「对某一个视口可见 / 不可见」的关系。对于三视口的全部 8 种组合情况，这种方式可以完整覆盖。
+          </p>
+          <p>
+            但如果视口数量超过三个，某些组合就无法直接表达了。例如四个视口中想实现「AB 不可见、CD 可见」的效果：由于一个 Actor 只能有一个 Owner，无法同时表示「对 C 可见」和「对 D 可见」而排除 AB。这种情况下可以采用变通方法——复制一份 Actor，一份仅对 C 可见，一份仅对 D 可见，通过牺牲性能换取更灵活的显隐控制。
+          </p>
+
+          <div class="tip-card">
+            <strong>📖 下一篇预告</strong>
+            <p>
+              如果需要实现更灵活的多视口白名单，可以查看我的下一篇文章：<a href="ue5-scenecapture-visibility.html">基于 SceneCaptureComponent 的多视口显隐方案</a>，利用 Hidden Actors / Show Only Actors 机制，可以突破 Owner 数量的限制，实现任意数量的视口独立显隐控制。
+            </p>
+          </div>
 
         </div>
 
