@@ -750,6 +750,11 @@
       pointer-events: none !important;
       visibility: hidden !important;
     }
+    .xw-panel.open ~ .xw-trigger {
+      opacity: 0 !important;
+      pointer-events: none !important;
+      visibility: hidden !important;
+    }
     .xw-trigger:hover {
       transform: scale(1.12) translateZ(0);
       box-shadow: 0 8px 36px rgba(255,122,200,.7);
@@ -1325,11 +1330,6 @@
     });
   </script>
 
-  <button class="xw-trigger" id="xwTrigger" aria-label="打开小歪助手">
-    <span style="font-size:28px;line-height:1">🐾</span>
-    <span class="xw-badge"></span>
-  </button>
-
   <div class="xw-panel" id="xwPanel">
     <div class="xw-header">
       <div class="xw-avatar">歪</div>
@@ -1347,6 +1347,11 @@
       </button>
     </div>
   </div>
+
+  <button class="xw-trigger" id="xwTrigger" aria-label="打开小歪助手">
+    <span style="font-size:28px;line-height:1">🐾</span>
+    <span class="xw-badge"></span>
+  </button>
 
   <script>
   (function() {
