@@ -744,7 +744,7 @@
       transform: scale(1.12);
       box-shadow: 0 8px 36px rgba(255,122,200,.7);
     }
-    .xw-trigger svg { width: 30px; height: 30px; fill: #2b082f; }
+    .xw-trigger span:first-child { display: block; line-height: 1; }
     .xw-trigger .xw-badge {
       position: absolute;
       top: -2px;
@@ -922,15 +922,19 @@
 
     @media (max-width: 480px) {
       .xw-panel {
-        right: 8px;
-        bottom: 8px;
-        width: calc(100vw - 16px);
-        max-height: 70vh;
+        right: 0;
+        bottom: 0;
+        width: 100vw;
+        max-height: 75vh;
+        border-radius: 24px 24px 0 0;
       }
       .xw-trigger {
         right: 16px;
         bottom: 16px;
+        width: 56px;
+        height: 56px;
       }
+      .xw-trigger span:first-child { font-size: 24px; }
     }
   </style>
 </head>
@@ -1306,7 +1310,7 @@
   </script>
 
   <button class="xw-trigger" id="xwTrigger" aria-label="打开小歪助手">
-    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+    <span style="font-size:28px;line-height:1">🐾</span>
     <span class="xw-badge"></span>
   </button>
 
@@ -1426,6 +1430,9 @@
       return div.innerHTML;
     }
 
+    var API_URL = 'https://api.minimaxi.com/v1/chat/completions';
+    var API_KEY = 'sk-cp-dwDKMp2Tm5_OofMuSsqo-8Zz0-jmAZT_3mJo7ugNuL6EUAoNDnrVV4ocBIzRAqIIlbOa18VHRlbtEd0Sod4f8UTEgVutG61l3McJKFd20SGxLLTlGqh_-0g';
+
     async function sendMessage() {
       var text = inputEl.value.trim();
       if (!text) return;
@@ -1442,10 +1449,19 @@
       }
 
       try {
-        var res = await fetch('/api/chat', {
+        var res = await fetch(API_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: messages })
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + API_KEY
+          },
+          body: JSON.stringify({
+            model: 'MiniMax-M2.1',
+            messages: messages,
+            stream: false,
+            temperature: 0.85,
+            max_completion_tokens: 1024
+          })
         });
         var data = await res.json();
         removeTyping();
