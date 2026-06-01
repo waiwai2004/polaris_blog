@@ -1392,12 +1392,14 @@
       isOpen = !isOpen;
       if (isOpen) {
         panel.classList.add('open');
+        trigger.style.display = 'none';
         if (chatHistory.length === 0) {
           addBotMessage('汪~ 你好呀！我是小歪，这儿的粉色小狗向导 🐾 有什么想了解的，尽管问我吧！');
         }
         setTimeout(function() { inputEl.focus(); }, 350);
       } else {
         panel.classList.remove('open');
+        trigger.style.display = 'flex';
       }
     }
 
@@ -1405,6 +1407,7 @@
     closeBtn.addEventListener('click', function() {
       isOpen = false;
       panel.classList.remove('open');
+      trigger.style.display = 'flex';
     });
 
     function addBotMessage(text) {
