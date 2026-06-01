@@ -735,17 +735,20 @@
       cursor: pointer;
       background: linear-gradient(135deg, #ffd7ef, #ff72c2 52%, #a173ff);
       box-shadow: 0 6px 28px rgba(255,122,200,.55);
-      display: flex !important;
+      display: flex;
       align-items: center;
       justify-content: center;
-      transition: transform .3s ease, box-shadow .3s ease;
+      transition: transform .3s ease, box-shadow .3s ease, opacity .3s ease;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
-      visibility: visible !important;
-      opacity: 1 !important;
       will-change: transform;
       -webkit-transform: translateZ(0);
       transform: translateZ(0);
+    }
+    .xw-trigger.xw-hidden {
+      opacity: 0 !important;
+      pointer-events: none !important;
+      visibility: hidden !important;
     }
     .xw-trigger:hover {
       transform: scale(1.12) translateZ(0);
@@ -1392,14 +1395,14 @@
       isOpen = !isOpen;
       if (isOpen) {
         panel.classList.add('open');
-        trigger.style.display = 'none';
+        trigger.classList.add('xw-hidden');
         if (chatHistory.length === 0) {
           addBotMessage('汪~ 你好呀！我是小歪，这儿的粉色小狗向导 🐾 有什么想了解的，尽管问我吧！');
         }
         setTimeout(function() { inputEl.focus(); }, 350);
       } else {
         panel.classList.remove('open');
-        trigger.style.display = 'flex';
+        trigger.classList.remove('xw-hidden');
       }
     }
 
@@ -1407,7 +1410,7 @@
     closeBtn.addEventListener('click', function() {
       isOpen = false;
       panel.classList.remove('open');
-      trigger.style.display = 'flex';
+      trigger.classList.remove('xw-hidden');
     });
 
     function addBotMessage(text) {
