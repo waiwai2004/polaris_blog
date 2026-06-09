@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
@@ -339,7 +339,7 @@
 
         <div class="article-body">
 
-          <img class="article-img" src="../yyj_note/blog/images/ebad54096fff94a0a51fb0e659cfc268.png" alt="多视口分屏效果预览" />
+          <img class="article-img" src="../yyj_note/assets/ue5-multi-viewport/ebad54096fff94a0a51fb0e659cfc268.png" alt="多视口分屏效果预览" />
 
           <p>
             本文将介绍如何在 Unreal Engine 中实现分屏显示（多视口），并且让每个视口中物体的显隐性不同。效果如上图所示：三个视口各自独立渲染，同一个场景中的不同物体在不同视口中的可见性是不同的。图中标注的含义：
@@ -389,7 +389,7 @@
           </p>
           <p>新建三个变量，分别引用三个 ViewPawn：</p>
 
-          <img class="article-img" src="../yyj_note/blog/images/Pasted image 20260525142920.png" alt="BP_MultiCamManager 变量配置" />
+          <img class="article-img" src="../yyj_note/assets/ue5-multi-viewport/Pasted image 20260525142920.png" alt="BP_MultiCamManager 变量配置" />
 
           <p>变量名分别为 <code>ViewPawnA</code>、<code>ViewPawnB</code>、<code>ViewPawnC</code>，类型均为 <strong>BP_View Pawn</strong>。</p>
 
@@ -402,9 +402,9 @@
             <li>使用 <strong>Set View Target with Blend</strong> 节点，将每个 Player 与对应的 ViewPawn 绑定。</li>
           </ol>
 
-          <img class="article-img" src="../yyj_note/blog/images/Pasted image 20260525140346.png" alt="Create Local Player 节点" />
+          <img class="article-img" src="../yyj_note/assets/ue5-multi-viewport/Pasted image 20260525140346.png" alt="Create Local Player 节点" />
 
-          <img class="article-img" src="../yyj_note/blog/images/Pasted image 20260525141009.png" alt="Set View Target with Blend 绑定" />
+          <img class="article-img" src="../yyj_note/assets/ue5-multi-viewport/Pasted image 20260525141009.png" alt="Set View Target with Blend 绑定" />
 
           <p>
             绑定逻辑重复三次，分别对应 Player 0 → ViewPawn_A、Player 1 → ViewPawn_B、Player 2 → ViewPawn_C。上图为其中一次绑定的细节：Get Player Controller（Player Index = 0）的返回值连接到 Set View Target with Blend 的 Target，New View Target 设为 ViewPawn_A。
@@ -419,14 +419,14 @@
             <li>根据需要的视口数量，在对应的分屏布局选项中调整。本教程使用三视口，可在 <strong>Three Player Splitscreen Layout</strong> 中选择合适的布局方式</li>
           </ul>
 
-          <img class="article-img" src="../yyj_note/blog/images/Pasted image 20260525141408.png" alt="项目设置开启分屏" />
+          <img class="article-img" src="../yyj_note/assets/ue5-multi-viewport/Pasted image 20260525141408.png" alt="项目设置开启分屏" />
 
           <h3>1.5 放入关卡并配置</h3>
           <p>
             将 BP_MultiCamManager 拖入关卡中，在 Details 面板中把三个变量分别设置为场景中的 ViewPawn_A、ViewPawn_B 和 ViewPawn_C：
           </p>
 
-          <img class="article-img" src="../yyj_note/blog/images/Pasted image 20260525143347.png" alt="关卡中配置 ViewPawn 引用" />
+          <img class="article-img" src="../yyj_note/assets/ue5-multi-viewport/Pasted image 20260525143347.png" alt="关卡中配置 ViewPawn 引用" />
 
           <p>运行游戏，即可看到三视口分屏效果。</p>
 
@@ -457,7 +457,7 @@
             <li>如果某个 Actor 希望被多个视口看到 → 同时打上多个标签（如同时打 <code>CamA</code> 和 <code>CamB</code>）</li>
           </ul>
 
-          <img class="article-img" src="../yyj_note/blog/images/Pasted image 20260525143845.png" alt="给 Actor 添加 Tag" />
+          <img class="article-img" src="../yyj_note/assets/ue5-multi-viewport/Pasted image 20260525143845.png" alt="给 Actor 添加 Tag" />
 
           <p>上图示例：Sphere_A_B 这个 Actor 同时打了 <code>CamA</code> 和 <code>CamB</code> 两个标签，表示它应该对 ViewPawn A 和 ViewPawn B 的视口都可见。</p>
 
@@ -466,14 +466,14 @@
             使用 <strong>Get All Actors with Tag</strong> 节点获取所有含有指定标签的 Actor（如 <code>CamA</code>），然后用 <strong>For Each Loop</strong> 遍历，对每个 Actor 调用自定义函数 <strong>Apply Visibility Rule</strong> 进行显隐性处理。
           </p>
 
-          <img class="article-img" src="../yyj_note/blog/images/Pasted image 20260525144035.png" alt="获取带标签的 Actor 并遍历" />
+          <img class="article-img" src="../yyj_note/assets/ue5-multi-viewport/Pasted image 20260525144035.png" alt="获取带标签的 Actor 并遍历" />
 
           <h3>2.3 显隐性判断函数 — Apply Visibility Rule</h3>
           <p>
             在 <strong>Apply Visibility Rule</strong> 函数中，建立以下局部变量：
           </p>
 
-          <img class="article-img" src="../yyj_note/blog/images/Pasted image 20260525144203.png" alt="Apply Visibility Rule 变量定义" />
+          <img class="article-img" src="../yyj_note/assets/ue5-multi-viewport/Pasted image 20260525144203.png" alt="Apply Visibility Rule 变量定义" />
 
           <table class="article-table">
             <thead>
@@ -496,7 +496,7 @@
             首先验证输入有效性，然后用三个 <strong>Actor Has Tag</strong> 节点分别判断该 Actor 是否包含 <code>CamA</code>、<code>CamB</code>、<code>CamC</code> 标签，结果分别存入布尔变量 A、B、C：
           </p>
 
-          <img class="article-img" src="../yyj_note/blog/images/Pasted image 20260525144245.png" alt="Actor Has Tag 判断" />
+          <img class="article-img" src="../yyj_note/assets/ue5-multi-viewport/Pasted image 20260525144245.png" alt="Actor Has Tag 判断" />
 
           <p>流程为：先 Is Valid 检查输入对象是否有效 → SET target；然后并行执行三个 Actor Has Tag 节点（Tag 分别为 CamA/CamB/CamC）→ 将结果 SET 到 A/B/C 三个布尔变量。</p>
 
@@ -508,7 +508,7 @@
             这里使用了一个巧妙的方法——<strong>给每个布尔值赋予权重，用 Select Int 节点计算组合值</strong>：
           </p>
 
-          <img class="article-img" src="../yyj_note/blog/images/Pasted image 20260525144420.png" alt="Select Int 权重计算" />
+          <img class="article-img" src="../yyj_note/assets/ue5-multi-viewport/Pasted image 20260525144420.png" alt="Select Int 权重计算" />
 
           <p>
             使用三个 <strong>Select Int</strong> 节点：
@@ -546,7 +546,7 @@
 
           <p>然后使用 <strong>Switch on int</strong> 节点，针对每种情况进行分类处理：</p>
 
-          <img class="article-img" src="../yyj_note/blog/images/Pasted image 20260525144550.png" alt="Switch on int 分支" />
+          <img class="article-img" src="../yyj_note/assets/ue5-multi-viewport/Pasted image 20260525144550.png" alt="Switch on int 分支" />
 
           <p>Switch on int 的 8 个分支（0~7），每个分支调用不同的显隐处理函数。</p>
 
@@ -556,7 +556,7 @@
           </p>
           <p>函数内部的节点连接方式如下：</p>
 
-          <img class="article-img" src="../yyj_note/blog/images/Pasted image 20260525144704.png" alt="显隐处理函数节点" />
+          <img class="article-img" src="../yyj_note/assets/ue5-multi-viewport/Pasted image 20260525144704.png" alt="显隐处理函数节点" />
 
           <h4>用到的关键节点说明</h4>
 
