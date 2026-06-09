@@ -5,8 +5,8 @@ const https = require('https');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const MINIMAX_API_KEY = process.env.MINIMAX_API_KEY || 'sk-cp-dwDKMp2Tm5_OofMuSsqo-8Zz0-jmAZT_3mJo7ugNuL6EUAoNDnrVV4ocBIzRAqIIlbOa18VHRlbtEd0Sod4f8UTEgVutG61l3McJKFd20SGxLLTlGqh_-0g';
-const MINIMAX_API_URL = 'https://api.minimaxi.com/v1/chat/completions';
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || 'sk-3fcb94b9ee50439b899e813f3f1613a4';
+const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
 
 app.use(express.json());
 app.use(express.static(__dirname));
@@ -54,7 +54,7 @@ app.post('/api/chat', (req, res) => {
   });
 
   apiReq.on('error', (e) => {
-    console.error('MiniMax API 请求失败:', e.message);
+    console.error('DeepSeek API 请求失败:', e.message);
     res.status(502).json({ error: { message: '无法连接到 AI 服务' } });
   });
 

@@ -1454,8 +1454,8 @@
       return div.innerHTML;
     }
 
-    var API_URL = 'https://api.minimaxi.com/v1/chat/completions';
-    var API_KEY = 'sk-cp-dwDKMp2Tm5_OofMuSsqo-8Zz0-jmAZT_3mJo7ugNuL6EUAoNDnrVV4ocBIzRAqIIlbOa18VHRlbtEd0Sod4f8UTEgVutG61l3McJKFd20SGxLLTlGqh_-0g';
+    var API_URL = 'https://api.deepseek.com/chat/completions';
+    var API_KEY = 'sk-3fcb94b9ee50439b899e813f3f1613a4';
 
     async function sendMessage() {
       var text = inputEl.value.trim();
@@ -1480,7 +1480,7 @@
             'Authorization': 'Bearer ' + API_KEY
           },
           body: JSON.stringify({
-            model: 'MiniMax-M2.1',
+            model: 'deepseek-chat',
             messages: messages,
             stream: false,
             temperature: 0.85,
