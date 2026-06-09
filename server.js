@@ -6,7 +6,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || 'sk-3fcb94b9ee50439b899e813f3f1613a4';
-const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
+const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
 
 app.use(express.json());
 app.use(express.static(__dirname));
