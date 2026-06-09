@@ -19,7 +19,7 @@ app.post('/api/chat', (req, res) => {
   }
 
   const payload = JSON.stringify({
-    model: 'deepseek-chat',
+    model: 'deepseek-v4-flash',
     messages: messages,
     stream: false,
     temperature: 0.85,
