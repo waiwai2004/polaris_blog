@@ -1454,9 +1454,6 @@
       return div.innerHTML;
     }
 
-    var API_URL = 'https://api.deepseek.com/chat/completions';
-    var API_KEY = 'sk-3fcb94b9ee50439b899e813f3f1613a4';
-
     async function sendMessage() {
       var text = inputEl.value.trim();
       if (!text) return;
@@ -1473,18 +1470,13 @@
       }
 
       try {
-        var res = await fetch(API_URL, {
+        var res = await fetch('/api/chat', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + API_KEY
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            model: 'deepseek-chat',
-            messages: messages,
-            stream: false,
-            temperature: 0.85,
-            max_completion_tokens: 1024
+            messages: messages
           })
         });
         var data = await res.json();
