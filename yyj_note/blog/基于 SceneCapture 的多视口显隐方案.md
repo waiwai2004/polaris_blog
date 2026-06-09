@@ -121,8 +121,6 @@
    - **Cast To BP_CineRTCamera** — 将 Child Actor 转换为目标类型
    - 调用 **InitCapture** — 传入对应的 RenderTarget 和白名单数组
 
-> 注意延迟 0.2 秒的原因：如果在 BeginPlay 立即初始化 SceneCapture，可能部分 Actor 还未完成 Spawn，导致 Get All Actors with Tag 无法获取到完整列表。短暂延迟可以避免这个问题。
-
 ---
 
 # 三、配置参数与放入关卡
@@ -173,8 +171,7 @@
 
 1. 添加一个 **Texture Sample** 节点
 2. 将 Texture 属性设置为对应的 RenderTarget（如 `RT_Cam_C`）
-3. 将 **RGB** 输出连接到 **Base Color**
-4. 将输出连接到 **Final Color**
+3. 将 **RGB** 输出连接到 **Final Color**
 
 > 关键点：确保 **Sampler Source** 设置为 `From texture asset`，并且勾选 **Apply View MipBias**，以保证渲染质量。
 
@@ -186,7 +183,7 @@
 
 运行游戏后的效果如上图所示：
 
-- **顶部大窗口（Cam A）**：显示了 `A and B`、`Only_A`、`ABC` 等标记的物体
+- **顶部窗口（Cam A）**：显示了 `A and B`、`Only_A`、`ABC` 等标记的物体
 - **左下窗口（Cam B）**：显示了 `A and B`、`Only_B`、`ABC` 等
 - **右下窗口（Cam C）**：显示了 `ABC` 以及 `Only_C` 标记的物体
 
@@ -220,15 +217,15 @@
 
 **性能优化建议：**
 
-| 优化手段 | 说明 | 效果 |
-|---------|------|------|
-| 降低 RenderTarget 分辨率 | 在可接受范围内尽量小（如 512×512） | 显著降低 GPU 负担 |
-| 设置 LOD Distance Factor > 1 | 让 Capture 使用更低级别的 LOD 模型 | 减少多边形数量 |
-| 关闭不必要的 Post Process | 在 Capture 的 Post Process 设置中关闭 Bloom、DOF 等 | 减少后期计算 |
-| 控制 Capture Every Frame | 如果画面不需要实时更新，关闭此选项改用手动 `CaptureScene()` | 从每帧渲染变为按需渲染 |
-| 设置 Max View Distance Override | 限制 Capture 的最大渲染距离 | 裁剪远处物体 |
-| 使用 Capture Sort Priority | 当存在多个 Capture 时合理排序 | 解决 GPU 依赖关系 |
+| 优化手段                          | 说明                                         | 效果          |
+| ----------------------------- | ------------------------------------------ | ----------- |
+| 降低 RenderTarget 分辨率           | 在可接受范围内尽量小（如 512×512）                      | 显著降低 GPU 负担 |
+| 设置 LOD Distance Factor > 1    | 让 Capture 使用更低级别的 LOD 模型                   | 减少多边形数量     |
+| 关闭不必要的 Post Process           | 在 Capture 的 Post Process 设置中关闭 Bloom、DOF 等 | 减少后期计算      |
+| 控制 Capture Every Frame        | 如果画面不需要实时更新，关闭此选项改用手动 `CaptureScene()`     | 从每帧渲染变为按需渲染 |
+| 设置 Max View Distance Override | 限制 Capture 的最大渲染距离                         | 裁剪远处物体      |
+| 使用 Capture Sort Priority      | 当存在多个 Capture 时合理排序                        | 解决 GPU 依赖关系 |
 
-> **注意**：当前方案的显隐列表仅在 BeginPlay 时设置一次。如果游戏过程中有 Actor 动态生成或销毁（如敌人被击杀消失），白名单不会自动更新。如需动态刷新，可以在 Actor Spawn/Destroy 时重新调用 ApplyWhitelist。
+> **注意**：当前方案的显隐列表仅在 BeginPlay 时设置一次。如果游戏过程中有 Actor 动态生成或销毁，白名单不会自动更新。如需动态刷新，可以在 Actor Spawn/Destroy 时重新调用 ApplyWhitelist。
 
 > **建议**：如果只需要 2~4 个视口的分屏游戏，优先使用上一篇的 Owner-based Visibility 方案；如果需要大量独立视角（如 6 个以上），再考虑本方案的 SceneCapture 方式。

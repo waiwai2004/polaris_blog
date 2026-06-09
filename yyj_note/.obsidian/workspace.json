@@ -11,12 +11,14 @@
             "id": "b891e8f594293512",
             "type": "leaf",
             "state": {
-              "type": "image",
+              "type": "markdown",
               "state": {
-                "file": "images/Pasted image 20260609140007.png"
+                "file": "blog/基于 SceneCapture 的多视口显隐方案.md",
+                "mode": "source",
+                "source": false
               },
-              "icon": "lucide-image",
-              "title": "Pasted image 20260609140007"
+              "icon": "lucide-file",
+              "title": "基于 SceneCapture 的多视口显隐方案"
             }
           }
         ]
@@ -191,10 +193,10 @@
   },
   "active": "b891e8f594293512",
   "lastOpenFiles": [
+    "blog/UE5多视口分屏与相机白名单实现.md",
     "blog/基于 SceneCapture 的多视口显隐方案.md",
     "images/Pasted image 20260609140007.png",
     "images/Pasted image 20260609140000.png",
-    "blog/UE5多视口分屏与相机白名单实现.md",
     "images/Pasted image 20260609135605.png",
     "images",
     "assets/ue5-scenecapture/Pasted image 20260609114151.png",

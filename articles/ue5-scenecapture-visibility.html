@@ -171,11 +171,38 @@
       text-shadow: 0 0 30px rgba(255, 122, 200, .25);
     }
 
+    .article-body h3 {
+      font-size: clamp(18px, 2.5vw, 24px);
+      line-height: 1.3;
+      letter-spacing: -.02em;
+      margin: 32px 0 14px;
+      color: var(--soft);
+    }
+
     .article-body p {
       color: var(--muted);
       font-size: 17px;
       line-height: 2;
       margin-bottom: 18px;
+    }
+
+    .article-body ul, .article-body ol {
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 2.2;
+      margin: 0 0 18px 24px;
+    }
+
+    .article-body li {
+      margin-bottom: 6px;
+    }
+
+    .article-body code {
+      background: rgba(255,255,255,.1);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-family: ui-monospace, "Cascadia Code", "Fira Code", monospace;
+      font-size: 15px;
     }
 
     .tip-card {
@@ -197,6 +224,50 @@
 
     .tip-card p {
       margin-bottom: 0;
+    }
+
+    .tip-card ul {
+      margin-bottom: 0;
+    }
+
+    .article-img {
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.12);
+      margin: 24px 0;
+      box-shadow: 0 12px 40px rgba(0,0,0,.25);
+    }
+
+    .img-caption {
+      text-align: center;
+      color: rgba(255,247,251,.5);
+      font-size: 14px;
+      margin-top: -12px;
+      margin-bottom: 24px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 24px 0;
+      font-size: 15px;
+      color: var(--muted);
+    }
+
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+      border: 1px solid rgba(255,255,255,.12);
+    }
+
+    th {
+      background: rgba(255,255,255,.08);
+      color: var(--soft);
+      font-weight: 700;
+    }
+
+    td {
+      background: rgba(255,255,255,.03);
     }
 
     .divider {
@@ -242,6 +313,8 @@
       .nav { width: min(100% - 28px, 820px); border-radius: 26px; }
       .nav-links { display: none; }
       .article-nav { flex-direction: column; }
+      table { font-size: 13px; }
+      th, td { padding: 8px 10px; }
     }
   </style>
 </head>
@@ -265,46 +338,433 @@
         <article class="article-header">
           <a href="../index.html#blog" class="back-link">← 返回博客</a>
           <div class="article-meta">
-            <span class="tag">2026.05</span>
+            <span class="tag">2026.06</span>
             <span class="tag">Unreal Engine 5.6</span>
             <span class="tag">SceneCapture</span>
             <span class="tag">多视口白名单</span>
           </div>
           <h1>基于 SceneCapture 的多视口显隐方案</h1>
-          <p class="subtitle">利用 SceneCaptureComponent 的 Hidden Actors / Show Only Actors 机制，突破 Owner 数量限制，实现任意数量的视口独立显隐控制。</p>
+          <p class="subtitle">利用 SceneCaptureComponent 的 Show Only Actors 机制，突破 Owner 数量限制，实现任意数量的视口独立显隐控制。</p>
         </article>
 
         <div class="article-body">
 
           <div class="tip-card">
-            <strong>🚧 文章编写中</strong>
-            <p>本文正在编写中，内容即将补充。敬请期待！</p>
+            <strong>引擎版本</strong>
+            <p>Unreal Engine 5.6.1</p>
           </div>
 
           <p>
-            在上一篇《<a href="ue5-multi-viewport.html">UE5 多视口分屏与相机白名单实现</a>》中，我们使用了 Owner-based Visibility 方案来实现三视口的独立显隐控制。但该方案受限于每个 Actor 只能有一个 Owner，无法覆盖更复杂的多视口组合情况。
-          </p>
-          <p>
-            本文将介绍一种更灵活的方案：基于 <strong>SceneCaptureComponent2D</strong> 的 <strong>Hidden Actors</strong>（隐藏所有，只显示指定的）和 <strong>Show Only Actors</strong>（只显示指定的）机制。这种方式可以为每个视口独立配置可见/隐藏的 Actor 列表，不再受 Owner 数量限制，支持任意数量的视口和任意组合的显隐规则。
+            本文将介绍另一种在 Unreal Engine 中实现多视口差异化显示的方案——利用 <strong>SceneCaptureComponent</strong> 的 <strong>Show Only Actors Components</strong> 机制。与上一篇「相机白名单」方案相比：
           </p>
 
-          <hr class="divider" />
+          <table>
+            <thead>
+              <tr>
+                <th>对比项</th>
+                <th>Owner-based Visibility（上篇）</th>
+                <th>SceneCapture 方案（本篇）</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>视口数量限制</td>
+                <td>理论上最多只支持三个视角的白名单机制</td>
+                <td><strong>无限制</strong>，可创建任意数量的 Capture</td>
+              </tr>
+              <tr>
+                <td>实现方式</td>
+                <td>利用 UE 内置的多人分屏 + Owner 机制</td>
+                <td>通过 SceneCapture 渲染到 RenderTarget 再显示到 UI</td>
+              </tr>
+              <tr>
+                <td>性能开销</td>
+                <td>较低，直接渲染到视口</td>
+                <td><strong>较高</strong>，每个 Capture 都需要额外渲染一帧</td>
+              </tr>
+              <tr>
+                <td>适用场景</td>
+                <td>少量视口（2~4 个）的分屏游戏</td>
+                <td>需要大量独立视角（如监控墙、战术地图等）</td>
+              </tr>
+            </tbody>
+          </table>
 
-          <h2>核心概念</h2>
-          <p>
-            <strong>SceneCaptureComponent2D</strong> 是 UE 中用于将场景渲染到纹理的组件。它提供了两个关键属性：
-          </p>
-          <ul style="color: var(--muted); font-size: 17px; line-height: 2.2; margin: 0 0 18px 24px;">
-            <li><strong>Hidden Actors</strong>：对该 SceneCapture 隐藏的 Actor 列表</li>
-            <li><strong>Show Only Actors</strong>：该 SceneCapture 只显示的 Actor 列表（启用后其他 Actor 全部隐藏）</li>
+          <img src="../yyj_note/assets/ue5-scenecapture/Pasted image 20260609095203.png" alt="运行效果预览" class="article-img" />
+          <p class="img-caption">运行效果预览</p>
+
+          <p>如上图所示：三个独立的 Render Target 各自显示不同的物体组合，最终通过 UI 拼接展示。图中标注的含义：</p>
+          <ul>
+            <li><strong>A and B</strong> — 对 Cam A 和 Cam B 都可见</li>
+            <li><strong>Only_A / Only_B / Only_C</strong> — 仅对对应 Cam 可见</li>
+            <li><strong>ABC</strong> — 对所有 Cam 都可见</li>
           </ul>
-          <p>通过为每个视口创建一个 SceneCaptureComponent2D，并分别配置其 Hidden / Show Only 列表，即可实现精确的多视口白名单控制。</p>
+
+          <p><strong>核心思路：</strong></p>
+          <ul>
+            <li>创建一个管理 Actor（BP_CineRTCamera），内置 <strong>SceneCaptureComponent2D</strong>，负责将场景渲染到 <strong>RenderTarget 2D</strong></li>
+            <li>利用 SceneCapture 的 <strong>Show Only Actors Components</strong> 机制，精确控制每个 Cam 看到的内容</li>
+            <li>创建 UI（UserWidget），将多个 RenderTarget 以 Image 组件的形式拼接展示</li>
+          </ul>
 
           <hr class="divider" />
 
-          <p style="text-align: center; color: var(--muted); padding: 40px 0;">
-            —— 文章内容持续更新中，敬请关注 ——
-          </p>
+          <h2>0. 前置准备：创建 Render Target</h2>
+
+          <p>在使用本方案之前，需要先创建用于接收渲染结果的 <strong>Render Target 2D</strong> 纹理资源：</p>
+
+          <ol>
+            <li>在内容浏览器中右键 → <strong>创建基础资源 → 渲染目标（Render Target 2D）</strong></li>
+            <li>命名（如 <code>RT_Cam_A</code>、<code>RT_Cam_B</code>、<code>RT_Cam_C</code>）</li>
+            <li>双击打开，设置合适的分辨率（建议 <strong>512×512</strong> 或 <strong>1024×1024</strong>）</li>
+          </ol>
+
+          <div class="tip-card">
+            <strong>💡 分辨率建议</strong>
+            <p>分辨率越高画质越好，但对 GPU 开销也越大。如果只是预览用途，512×512 已足够。</p>
+          </div>
+
+          <p>每个 Cam 需要一个独立的 Render Target。</p>
+
+          <hr class="divider" />
+
+          <h2>一、创建蓝图类 BP_CineRTCamera</h2>
+
+          <h3>1.1 蓝图结构与组件配置</h3>
+
+          <p>新建一个蓝图类 <code>BP_CineRTCamera</code>（继承自 <strong>Actor</strong>）。</p>
+
+          <img src="../yyj_note/assets/ue5-scenecapture/Pasted image 20260609092105.png" alt="BP_CineRTCamera 组件结构" class="article-img" />
+          <p class="img-caption">BP_CineRTCamera 组件结构</p>
+
+          <p>在 Components 面板中可以看到该蓝图的组件结构：</p>
+          <ul>
+            <li><strong>CineCamera</strong>（SceneCaptureComponent2D）— 核心组件，负责将场景渲染到纹理</li>
+          </ul>
+
+          <p>在 Variables 中定义了以下变量：</p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>变量名</th>
+                <th>类型</th>
+                <th>用途</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>CameraName</td>
+                <td>Name</td>
+                <td>该相机的标识名称</td>
+              </tr>
+              <tr>
+                <td>RenderTarget</td>
+                <td>Texture Render Target 2D</td>
+                <td>渲染输出的目标纹理</td>
+              </tr>
+              <tr>
+                <td>WhitelistActors</td>
+                <td>Actor 数组</td>
+                <td>白名单列表（Show Only Actors）</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3>1.2 自定义事件：InitCapture 与 ApplyWhitelist</h3>
+
+          <h4>InitCapture 事件 — 初始化渲染目标</h4>
+
+          <img src="../yyj_note/assets/ue5-scenecapture/Pasted image 20260609113740.png" alt="InitCapture 事件蓝图" class="article-img" />
+          <p class="img-caption">InitCapture 事件蓝图</p>
+
+          <p><code>InitCapture</code> 是一个 Custom Event，用于初始化 SceneCapture 组件的渲染目标和白名单设置。</p>
+
+          <p>流程如下：</p>
+          <ol>
+            <li>接收两个输入参数：<code>In Render Target</code>（RenderTarget 2D 引用）和 <code>In Whitelist Actors</code>（Actor 数组）</li>
+            <li>先做 <strong>Is Valid</strong> 检查，确保输入有效</li>
+            <li>将 <code>In Render Target</code> SET 到 <code>Texture Target</code> 变量</li>
+            <li>将 <code>In Whitelist Actors</code> SET 到 <code>WhitelistActors</code> 变量</li>
+            <li>调用 <strong>Apply Whitelist</strong> 自定义事件，将白名单应用到 SceneCaptureComponent2D</li>
+          </ol>
+
+          <h4>ApplyWhitelist 事件 — 应用显隐规则</h4>
+
+          <img src="../yyj_note/assets/ue5-scenecapture/Pasted image 20260609113850.png" alt="ApplyWhitelist 事件蓝图" class="article-img" />
+          <p class="img-caption">ApplyWhitelist 事件蓝图</p>
+
+          <p><code>ApplyWhitelist</code> 是另一个 Custom Event，负责实际执行显隐控制。</p>
+
+          <p>流程如下：</p>
+          <ol>
+            <li>接收 <code>In Whitelist Actors</code> 参数</li>
+            <li>SET <strong>Primitive Render Mode</strong> 为 <code>Use Show Only List</code>（使用仅显示列表模式）</li>
+            <li>调用 <strong>Clear Show Only Components</strong> 清除之前的白名单设置</li>
+            <li>使用 <strong>For Each Loop</strong> 遍历白名单数组中的每个 Actor</li>
+            <li>循环体内调用 <strong>Show Only Actor Components</strong></li>
+          </ol>
+
+          <div class="tip-card">
+            <strong>🔑 关键点</strong>
+            <p>当 Primitive Render Mode 设为 <code>Use Show Only List</code> 后，SceneCapture 只会渲染白名单中指定的 Actor 组件，其他所有物体都会被忽略。</p>
+          </div>
+
+          <div class="tip-card">
+            <strong>📝 补充：黑名单模式（Hidden Actors）</strong>
+            <p>除了本文使用的白名单模式（Show Only Actors），SceneCapture 还支持 <strong>Hidden Actors</strong> 黑名单模式——指定哪些 Actor 不渲染，其余全部渲染。使用方式类似，只需将 Primitive Render Mode 设为 <strong>Render Scene Primitives</strong>（默认），然后调用 <code>Add Hidden Actor</code> 节点即可。</p>
+            <p>两种模式可根据实际需求选择：白名单适合"只看这几个"，黑名单适合"除了这几个都看"。</p>
+          </div>
+
+          <hr class="divider" />
+
+          <h2>二、创建管理器蓝图 BP_CineRTCameraManager</h2>
+
+          <h3>2.1 蓝图结构：Child Actor 组件</h3>
+
+          <p>新建一个蓝图类 <code>BP_CineRTCameraManager</code>（继承自 <strong>Actor</strong>），作为白名单的管理中心。</p>
+
+          <img src="../yyj_note/assets/ue5-scenecapture/Pasted image 20260609114037.png" alt="BP_CineRTCameraManager 组件结构" class="article-img" />
+          <p class="img-caption">BP_CineRTCameraManager 组件结构</p>
+
+          <p>在该蓝图中添加 <strong>Child Actor Component</strong>，并将 <strong>Child Actor Class</strong> 设置为 <code>BP_CineRTCamera</code>。</p>
+
+          <img src="../yyj_note/assets/ue5-scenecapture/Pasted image 20260609093824.png" alt="Child Actor Class 设置" class="article-img" />
+          <p class="img-caption">Child Actor Class 设置</p>
+
+          <p>这样管理器就可以通过 Child Actor 组件来创建和管理多个 CineRTCamera 实例了。</p>
+
+          <h3>2.2 BeginPlay 事件 — 初始化所有相机</h3>
+
+          <p>在 <strong>BeginPlay</strong> 事件中进行初始化：</p>
+
+          <img src="../yyj_note/assets/ue5-scenecapture/Pasted image 20260609114151.png" alt="BeginPlay 白名单构建" class="article-img" />
+          <p class="img-caption">BeginPlay 白名单构建</p>
+
+          <ol>
+            <li>定义三组数据：
+              <ul>
+                <li><strong>Only AActors</strong>、<strong>Only BActors</strong>、<strong>Only CActors</strong> — 分别为三个 Cam 的专属白名单</li>
+                <li><strong>CommonActors</strong> — 所有 Cam 共同可见的 Actor 列表</li>
+              </ul>
+            </li>
+            <li>用三次 <strong>APPEND</strong> 操作，分别构建各 Cam 的完整白名单：
+              <ul>
+                <li>Cam A = CommonActors + Only AActors</li>
+                <li>Cam B = CommonActors + Only BActors</li>
+                <li>Cam C = CommonActors + Only CActors</li>
+              </ul>
+            </li>
+            <li>延迟 <strong>0.2 秒</strong>（Delay 节点），确保关卡中的 Actor 已完全初始化</li>
+          </ol>
+
+          <img src="../yyj_note/assets/ue5-scenecapture/Pasted image 20260609140007.png" alt="延迟后调用 InitCapture" class="article-img" />
+          <p class="img-caption">延迟后调用 InitCapture</p>
+
+          <p>延迟结束后，对三个 Child Actor 分别执行：</p>
+          <ul>
+            <li><strong>Cast To BP_CineRTCamera</strong> — 将 Child Actor 转换为目标类型</li>
+            <li>调用 <strong>InitCapture</strong> — 传入对应的 RenderTarget 和白名单数组</li>
+          </ul>
+
+          <hr class="divider" />
+
+          <h2>三、配置参数与放入关卡</h2>
+
+          <h3>3.1 配置管理器的参数</h3>
+
+          <p>将 <code>BP_CineRTCameraManager</code> 拖入关卡后，在 Details 面板中配置参数：</p>
+
+          <img src="../yyj_note/assets/ue5-scenecapture/Pasted image 20260609094114.png" alt="管理器参数配置" class="article-img" />
+          <p class="img-caption">管理器参数配置</p>
+
+          <p>上图为管理器的变量配置面板，需要为 RT_A、RT_B、RT_C 三个 Child Actor 分别选择对应的 RenderTarget，并设置各自的显隐白名单：</p>
+          <ul>
+            <li><strong>CommonActors</strong>：7 个元素（所有视口共有的物体）</li>
+            <li><strong>Only AActors</strong>：2 个元素（仅 Cam A 可见）</li>
+            <li><strong>Only BActors</strong>：2 个元素（如 <code>Cube_Only_B</code>、<code>Sphere_A_B</code>）</li>
+            <li><strong>Only CActors</strong>：1 个元素（如 <code>Cube_Only_A</code>）</li>
+          </ul>
+
+          <hr class="divider" />
+
+          <h2>四、创建 UI 显示多视口画面</h2>
+
+          <h3>4.1 创建 UserWidget</h3>
+
+          <p>创建一个 <strong>UserWidget</strong>（如命名为 <code>WBP_MultiCamPreview</code>），用于展示多个 RenderTarget 的画面。</p>
+
+          <img src="../yyj_note/assets/ue5-scenecapture/Pasted image 20260609094158.png" alt="UI 布局设计" class="article-img" />
+          <p class="img-caption">UI 布局设计</p>
+
+          <p>在 UMG 编辑器中：</p>
+          <ul>
+            <li>放入多个 <strong>Image</strong> 组件作为预览窗口</li>
+            <li>每个 Image 对应一个 Cam 的 RenderTarget</li>
+          </ul>
+
+          <h3>4.2 创建材质连接 RenderTarget</h3>
+
+          <p>为了让 Image 组件正确显示 SceneCapture 渲染的内容，需要创建材质。</p>
+
+          <img src="../yyj_note/assets/ue5-scenecapture/Pasted image 20260609094518.png" alt="材质资源" class="article-img" />
+          <p class="img-caption">材质资源</p>
+
+          <p>创建三个材质实例（或使用同一个材质的不同实例）：</p>
+          <ul>
+            <li><strong>M_RT_Cam_A</strong></li>
+            <li><strong>M_RT_Cam_B</strong></li>
+            <li><strong>M_RT_Cam_C</strong></li>
+          </ul>
+
+          <h3>4.3 材质节点设置</h3>
+
+          <img src="../yyj_note/assets/ue5-scenecapture/Pasted image 20260609094605.png" alt="材质节点连接" class="article-img" />
+          <p class="img-caption">材质节点连接</p>
+
+          <p>材质的核心结构非常简单：</p>
+          <ol>
+            <li>添加一个 <strong>Texture Sample</strong> 节点</li>
+            <li>将 Texture 属性设置为对应的 RenderTarget（如 <code>RT_Cam_C</code>）</li>
+            <li>将 <strong>RGB</strong> 输出连接到 <strong>Final Color</strong></li>
+          </ol>
+
+          <div class="tip-card">
+            <strong>💡 关键设置</strong>
+            <p>确保 <strong>Sampler Source</strong> 设置为 <code>From texture asset</code>，并且勾选 <strong>Apply View MipBias</strong>，以保证渲染质量。</p>
+          </div>
+
+          <hr class="divider" />
+
+          <h2>五、运行效果</h2>
+
+          <img src="../yyj_note/assets/ue5-scenecapture/Pasted image 20260609095203.png" alt="最终运行效果" class="article-img" />
+          <p class="img-caption">最终运行效果</p>
+
+          <p>运行游戏后的效果如上图所示：</p>
+          <ul>
+            <li><strong>顶部窗口（Cam A）</strong>：显示了 <code>A and B</code>、<code>Only_A</code>、<code>ABC</code> 等标记的物体</li>
+            <li><strong>左下窗口（Cam B）</strong>：显示了 <code>A and B</code>、<code>Only_B</code>、<code>ABC</code> 等</li>
+            <li><strong>右下窗口（Cam C）</strong>：显示了 <code>ABC</code> 以及 <code>Only_C</code> 标记的物体</li>
+          </ul>
+
+          <p>每个视口中物体的显隐性完全独立，互不影响。</p>
+
+          <hr class="divider" />
+
+          <h2>六、总结</h2>
+
+          <table>
+            <thead>
+              <tr>
+                <th>步骤</th>
+                <th>说明</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>创建 BP_CineRTCamera</td>
+                <td>继承 Actor，添加 SceneCaptureComponent2D，定义 CameraName/RenderTarget/WhitelistActors 变量</td>
+              </tr>
+              <tr>
+                <td>实现 InitCapture 事件</td>
+                <td>接收 RenderTarget 和白名单数组，调用 ApplyWhitelist 应用</td>
+              </tr>
+              <tr>
+                <td>实现 ApplyWhitelist 事件</td>
+                <td>设置 PrimitiveRenderMode = Use Show Only List，遍历白名单调用 Show Only Actor Components</td>
+              </tr>
+              <tr>
+                <td>创建 BP_CineRTCameraManager</td>
+                <td>添加 Child Actor Component（Class = BP_CineRTCamera），管理多个 Cam 实例</td>
+              </tr>
+              <tr>
+                <td>BeginPlay 初始化</td>
+                <td>构建各组白名单（Common + OnlyX），延迟 0.2s 后调用各 Cam 的 InitCapture</td>
+              </tr>
+              <tr>
+                <td>创建 UI (UserWidget)</td>
+                <td>放置 Image 组件作为视口预览窗口</td>
+              </tr>
+              <tr>
+                <td>创建材质</td>
+                <td>Texture Sample 连接 RenderTarget → Base Color → Final Color</td>
+              </tr>
+              <tr>
+                <td>绑定材质到 UI</td>
+                <td>将各 Cam 的材质赋给对应 Image 组件的 Image 属性</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3>优缺点总结</h3>
+
+          <p><strong>优点：</strong></p>
+          <ul>
+            <li>视口数量不受 Player 限制，理论上可以创建任意数量的独立视角</li>
+            <li>显隐控制灵活，每个 Cam 可以有完全不同的白名单</li>
+            <li>不依赖分屏机制，可自由布局 UI 展示方式</li>
+          </ul>
+
+          <p><strong>缺点：</strong></p>
+          <ul>
+            <li>每个 SceneCapture 都需要额外渲染一次场景，<strong>性能开销较大</strong>（单个 Capture 可导致帧率下降 30%~40%）</li>
+            <li>视口数量越多，GPU 负担越重</li>
+          </ul>
+
+          <h3>性能优化建议</h3>
+
+          <table>
+            <thead>
+              <tr>
+                <th>优化手段</th>
+                <th>说明</th>
+                <th>效果</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>降低 RenderTarget 分辨率</td>
+                <td>在可接受范围内尽量小（如 512×512）</td>
+                <td>显著降低 GPU 负担</td>
+              </tr>
+              <tr>
+                <td>设置 LOD Distance Factor > 1</td>
+                <td>让 Capture 使用更低级别的 LOD 模型</td>
+                <td>减少多边形数量</td>
+              </tr>
+              <tr>
+                <td>关闭不必要的 Post Process</td>
+                <td>在 Capture 的 Post Process 设置中关闭 Bloom、DOF 等</td>
+                <td>减少后期计算</td>
+              </tr>
+              <tr>
+                <td>控制 Capture Every Frame</td>
+                <td>如果画面不需要实时更新，关闭此选项改用手动 <code>CaptureScene()</code></td>
+                <td>从每帧渲染变为按需渲染</td>
+              </tr>
+              <tr>
+                <td>设置 Max View Distance Override</td>
+                <td>限制 Capture 的最大渲染距离</td>
+                <td>裁剪远处物体</td>
+              </tr>
+              <tr>
+                <td>使用 Capture Sort Priority</td>
+                <td>当存在多个 Capture 时合理排序</td>
+                <td>解决 GPU 依赖关系</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="tip-card">
+            <strong>⚠️ 注意</strong>
+            <p>当前方案的显隐列表仅在 BeginPlay 时设置一次。如果游戏过程中有 Actor 动态生成或销毁，白名单不会自动更新。如需动态刷新，可以在 Actor Spawn/Destroy 时重新调用 ApplyWhitelist。</p>
+          </div>
+
+          <div class="tip-card">
+            <strong>💡 建议</strong>
+            <p>如果只需要 2~4 个视口的分屏游戏，优先使用上一篇的 Owner-based Visibility 方案；如果需要大量独立视角（如 6 个以上），再考虑本方案的 SceneCapture 方式。</p>
+          </div>
 
         </div>
 
