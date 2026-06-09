@@ -78,8 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 265.5,
-    "collapsed": true
+    "width": 265.5
   },
   "right": {
     "id": "fd0bf0133c32622f",
@@ -194,19 +193,19 @@
   },
   "active": "b891e8f594293512",
   "lastOpenFiles": [
+    "assets/ue5-scenecapture/Pasted image 20260609095203.png",
+    "blog/UE5多视口分屏与相机白名单实现.md",
+    "blog/基于 SceneCapture 的多视口显隐方案.md",
+    "assets/ue5-multi-viewport/Pasted image 20260525144203.png",
+    "assets/ue5-multi-viewport/Pasted image 20260525143845.png",
+    "assets/ue5-multi-viewport/ebad54096fff94a0a51fb0e659cfc268.png",
     "images/Pasted image 20260609114318.png",
     "images/Pasted image 20260609114151.png",
     "images/Pasted image 20260609114037.png",
     "images/Pasted image 20260609113850.png",
     "images/Pasted image 20260609113740.png",
-    "blog/UE5多视口分屏与相机白名单实现.md",
-    "blog/基于 SceneCapture 的多视口显隐方案.md",
     "images/Pasted image 20260609094114.png",
     "images/Pasted image 20260609092951.png",
-    "images/Pasted image 20260609093816.png",
-    "images/Pasted image 20260609092538.png",
-    "images/Pasted image 20260609093824.png",
-    "blog/images/Pasted image 20260525144357.png",
     "个人网站文章/UE5多视口分屏与相机白名单实现.md",
     "实习工作记录/01-日报/2026-06-08.md",
     "个人网站文章/基于 SceneCapture 的多视口显隐方案.md",

@@ -1,3 +1,4 @@
+# 基于 SceneCapture 的多视口显隐方案
 
 > **引擎版本**：Unreal Engine 5.6.1
 
@@ -22,6 +23,19 @@
 
 ---
 
+## 0. 前置准备：创建 Render Target
+
+在使用本方案之前，需要先创建用于接收渲染结果的 **Render Target 2D** 纹理资源：
+
+1. 在内容浏览器中右键 → **创建基础资源 → 渲染目标（Render Target 2D）**
+2. 命名（如 `RT_Cam_A`、`RT_Cam_B`、`RT_Cam_C`）
+3. 双击打开，设置合适的分辨率（建议 **512×512** 或 **1024×1024**）
+   > 分辨率越高画质越好，但对 GPU 开销也越大。如果只是预览用途，512×512 已足够
+
+每个 Cam 需要一个独立的 Render Target。
+
+---
+
 # 一、创建蓝图类 BP_CineRTCamera
 
 ## 1.1 蓝图结构与组件配置
@@ -42,7 +56,7 @@
 
 ## 1.2 自定义事件：InitCapture 与 ApplyWhitelist
 
-### InitCapture 事件 — 初始化��染目标
+### InitCapture 事件 — 初始化渲染目标
 ![[../assets/ue5-scenecapture/Pasted image 20260609113740.png]]
 
 `InitCapture` 是一个 Custom Event，用于初始化 SceneCapture 组件的渲染目标和白名单设置。
@@ -62,12 +76,15 @@
 
 流程如下：
 1. 接收 `In Whitelist Actors` 参数
-2. SET **Primitive Render Mode** 为 `Use ShowOnly List`（使用仅显示列表模式）
+2. SET **Primitive Render Mode** 为 `Use Show Only List`（使用仅显示列表模式）
 3. 调用 **Clear Show Only Components** 清除之前的白名单设置
 4. 使用 **For Each Loop** 遍历白名单数组中的每个 Actor
 5. 循环体内调用 **Show Only Actor Components**
 
-> 这一步是关键：当 Primitive Render Mode 设为 `Use ShowOnlyList` 后，SceneCapture 只会渲染白名单中指定的 Actor 组件，其他所有物体都会被忽略。
+> 这一步是关键：当 Primitive Render Mode 设为 `Use Show Only List` 后，SceneCapture 只会渲染白名单中指定的 Actor 组件，其他所有物体都会被忽略。
+
+> **补充：黑名单模式（Hidden Actors）**
+> 除了本文使用的白名单模式（Show Only Actors），SceneCapture 还支持 **Hidden Actors** 黑名单模式——指定哪些 Actor 不渲染，其余全部渲染。使用方式类似，只需将 Primitive Render Mode 设为 **Render Scene Primitives**（默认），然后调用 `Add Hidden Actor` 节点即可。两种模式可根据实际需求选择：白名单适合"只看这几个"，黑名单适合"除了这几个都看"。
 
 ---
 
@@ -84,8 +101,6 @@
 
 ## 2.2 BeginPlay 事件 — 初始化所有相机
 
-![[../assets/ue5-scenecapture/Pasted image 20260609094114.png]]
-
 在 **BeginPlay** 事件中进行初始化：
 ![[../assets/ue5-scenecapture/Pasted image 20260609114151.png]]
 
@@ -100,8 +115,6 @@
 
 3. 延迟 **0.2 秒**（Delay 节点），确保关卡中的 Actor 已完全初始化
 
-
-![[../assets/ue5-scenecapture/Pasted image 20260609114318.png]]
 4. 延迟结束后，对三个 Child Actor 分别执行：
    - **Cast To BP_CineRTCamera** — 将 Child Actor 转换为目标类型
    - 调用 **InitCapture** — 传入对应的 RenderTarget 和白名单数组
@@ -185,7 +198,7 @@
 |------|------|
 | 创建 BP_CineRTCamera | 继承 Actor，添加 SceneCaptureComponent2D，定义 CameraName/RenderTarget/WhelistActors 变量 |
 | 实现 InitCapture 事件 | 接收 RenderTarget 和白名单数组，调用 ApplyWhitelist 应用 |
-| 实现 ApplyWhitelist 事件 | 设置 PrimitiveRenderMode = UseShowOnlyList，遍历白名单调用 Show Only Actor Components |
+| 实现 ApplyWhitelist 事件 | 设置 PrimitiveRenderMode = Use Show Only List，遍历白名单调用 Show Only Actor Components |
 | 创建 BP_CineRTCameraManager | 添加 Child Actor Component（Class = BP_CineRTCamera），管理多个 Cam 实例 |
 | BeginPlay 初始化 | 构建各组白名单（Common + OnlyX），延迟 0.2s 后调用各 Cam 的 InitCapture |
 | 创建 UI (UserWidget) | 放置 Image 组件作为视口预览窗口 |
@@ -197,9 +210,23 @@
 **优点：**
 - 视口数量不受 Player 限制，理论上可以创建任意数量的独立视角
 - 显隐控制灵活，每个 Cam 可以有完全不同的白名单
+- 不依赖分屏机制，可自由布局 UI 展示方式
 
 **缺点：**
-- 每个 SceneCapture 都需要额外渲染一次场景，**性能开销较大**
-- 视口数量越多，GPU 负担越重，需要注意性能优化
+- 每个 SceneCapture 都需要额外渲染一次场景，**性能开销较大**（单个 Capture 可导致帧率下降 30%~40%）
+- 视口数量越多，GPU 负担越重
+
+**性能优化建议：**
+
+| 优化手段 | 说明 | 效果 |
+|---------|------|------|
+| 降低 RenderTarget 分辨率 | 在可接受范围内尽量小（如 512×512） | 显著降低 GPU 负担 |
+| 设置 LOD Distance Factor > 1 | 让 Capture 使用更低级别的 LOD 模型 | 减少多边形数量 |
+| 关闭不必要的 Post Process | 在 Capture 的 Post Process 设置中关闭 Bloom、DOF 等 | 减少后期计算 |
+| 控制 Capture Every Frame | 如果画面不需要实时更新，关闭此选项改用手动 `CaptureScene()` | 从每帧渲染变为按需渲染 |
+| 设置 Max View Distance Override | 限制 Capture 的最大渲染距离 | 裁剪远处物体 |
+| 使用 Capture Sort Priority | 当存在多个 Capture 时合理排序 | 解决 GPU 依赖关系 |
+
+> **注意**：当前方案的显隐列表仅在 BeginPlay 时设置一次。如果游戏过程中有 Actor 动态生成或销毁（如敌人被击杀消失），白名单不会自动更新。如需动态刷新，可以在 Actor Spawn/Destroy 时重新调用 ApplyWhitelist。
 
 > **建议**：如果只需要 2~4 个视口的分屏游戏，优先使用上一篇的 Owner-based Visibility 方案；如果需要大量独立视角（如 6 个以上），再考虑本方案的 SceneCapture 方式。
