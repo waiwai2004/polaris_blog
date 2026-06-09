@@ -11,14 +11,12 @@
             "id": "b891e8f594293512",
             "type": "leaf",
             "state": {
-              "type": "markdown",
+              "type": "image",
               "state": {
-                "file": "blog/基于 SceneCapture 的多视口显隐方案.md",
-                "mode": "source",
-                "source": false
+                "file": "images/Pasted image 20260609140007.png"
               },
-              "icon": "lucide-file",
-              "title": "基于 SceneCapture 的多视口显隐方案"
+              "icon": "lucide-image",
+              "title": "Pasted image 20260609140007"
             }
           }
         ]
@@ -193,23 +191,22 @@
   },
   "active": "b891e8f594293512",
   "lastOpenFiles": [
-    "assets/ue5-scenecapture/Pasted image 20260609095203.png",
-    "blog/UE5多视口分屏与相机白名单实现.md",
     "blog/基于 SceneCapture 的多视口显隐方案.md",
-    "assets/ue5-multi-viewport/Pasted image 20260525144203.png",
-    "assets/ue5-multi-viewport/Pasted image 20260525143845.png",
-    "assets/ue5-multi-viewport/ebad54096fff94a0a51fb0e659cfc268.png",
-    "images/Pasted image 20260609114318.png",
-    "images/Pasted image 20260609114151.png",
-    "images/Pasted image 20260609114037.png",
-    "images/Pasted image 20260609113850.png",
-    "images/Pasted image 20260609113740.png",
-    "images/Pasted image 20260609094114.png",
-    "images/Pasted image 20260609092951.png",
+    "images/Pasted image 20260609140007.png",
+    "images/Pasted image 20260609140000.png",
+    "blog/UE5多视口分屏与相机白名单实现.md",
+    "images/Pasted image 20260609135605.png",
+    "images",
+    "assets/ue5-scenecapture/Pasted image 20260609114151.png",
+    "assets/ue5-scenecapture/Pasted image 20260609114037.png",
+    "assets/ue5-scenecapture/Pasted image 20260609113850.png",
+    "assets/ue5-scenecapture/Pasted image 20260609113740.png",
+    "assets/ue5-scenecapture/Pasted image 20260609095203.png",
+    "assets/ue5-scenecapture/Pasted image 20260609094605.png",
+    "assets/ue5-scenecapture/Pasted image 20260609094518.png",
     "个人网站文章/UE5多视口分屏与相机白名单实现.md",
     "实习工作记录/01-日报/2026-06-08.md",
     "个人网站文章/基于 SceneCapture 的多视口显隐方案.md",
-    "images",
     "实习工作记录/01-日报/2026-06-03.md",
     "实习工作记录/01-日报/2026-06-01.md",
     "实习工作记录/01-日报/2026-05-25.md",

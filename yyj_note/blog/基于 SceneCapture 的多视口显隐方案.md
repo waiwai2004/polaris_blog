@@ -115,6 +115,8 @@
 
 3. 延迟 **0.2 秒**（Delay 节点），确保关卡中的 Actor 已完全初始化
 
+![[../assets/ue5-scenecapture/Pasted image 20260609140007.png]]
+
 4. 延迟结束后，对三个 Child Actor 分别执行：
    - **Cast To BP_CineRTCamera** — 将 Child Actor 转换为目标类型
    - 调用 **InitCapture** — 传入对应的 RenderTarget 和白名单数组
