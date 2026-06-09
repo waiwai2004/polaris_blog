@@ -1454,8 +1454,7 @@
       return div.innerHTML;
     }
 
-    var API_URL = 'https://api.deepseek.com/v1/chat/completions';
-    var API_KEY = 'sk-3fcb94b9ee50439b899e813f3f1613a4';
+    var API_URL = '/api/chat';
 
     async function sendMessage() {
       var text = inputEl.value.trim();
@@ -1476,15 +1475,10 @@
         var res = await fetch(API_URL, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + API_KEY
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            model: 'deepseek-v4-flash',
-            messages: messages,
-            stream: false,
-            temperature: 0.85,
-            max_completion_tokens: 1024
+            messages: messages
           })
         });
         var data = await res.json();
@@ -1499,13 +1493,13 @@
           addBotMessage(reply);
           chatHistory.push({ role: 'assistant', content: reply });
         } else if (data.error) {
-          addBotMessage('汪…出了点小问题：' + (data.error.message || '请稍后再试试') + ' [status:' + res.status + ']');
+          addBotMessage('汪…' + (data.error.message || '出了点小问题，请稍后再试试。'));
         } else {
-          addBotMessage('汪…好像出了点问题，请稍后再试~ [status:' + res.status + '] 响应:' + JSON.stringify(data).substring(0, 200));
+          addBotMessage('汪…好像出了点问题，请稍后再试试。');
         }
       } catch (e) {
         removeTyping();
-        addBotMessage('汪…网络好像不太稳定，请稍后再试试 🐾 [error:' + e.message + ']');
+        addBotMessage('汪…网络好像不太稳定，请稍后再试试。');
       }
     }
 
