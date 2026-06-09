@@ -1490,19 +1490,22 @@
         var data = await res.json();
         removeTyping();
 
+        console.log('[DEBUG] status:', res.status);
+        console.log('[DEBUG] response:', JSON.stringify(data).substring(0, 1000));
+
         if (data.choices && data.choices[0] && data.choices[0].message) {
           var reply = data.choices[0].message.content;
           reply = reply.replace(/<think[\s\S]*?<\/think>/g, '').trim();
           addBotMessage(reply);
           chatHistory.push({ role: 'assistant', content: reply });
         } else if (data.error) {
-          addBotMessage('汪…出了点小问题：' + (data.error.message || '请稍后再试试'));
+          addBotMessage('汪…出了点小问题：' + (data.error.message || '请稍后再试试') + ' [status:' + res.status + ']');
         } else {
-          addBotMessage('汪…好像出了点问题，请稍后再试~');
+          addBotMessage('汪…好像出了点问题，请稍后再试~ [status:' + res.status + '] 响应:' + JSON.stringify(data).substring(0, 200));
         }
       } catch (e) {
         removeTyping();
-        addBotMessage('汪…网络好像不太稳定，请稍后再试试 🐾');
+        addBotMessage('汪…网络好像不太稳定，请稍后再试试 🐾 [error:' + e.message + ']');
       }
     }
 
