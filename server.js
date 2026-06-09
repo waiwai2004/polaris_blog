@@ -19,14 +19,14 @@ app.post('/api/chat', (req, res) => {
   }
 
   const payload = JSON.stringify({
-    model: 'MiniMax-M2.1',
+    model: 'deepseek-chat',
     messages: messages,
     stream: false,
     temperature: 0.85,
     max_completion_tokens: 1024
   });
 
-  const url = new URL(MINIMAX_API_URL);
+  const url = new URL(DEEPSEEK_API_URL);
 
   const options = {
     hostname: url.hostname,
@@ -34,7 +34,7 @@ app.post('/api/chat', (req, res) => {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${MINIMAX_API_KEY}`,
+      'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
       'Content-Length': Buffer.byteLength(payload)
     }
   };
