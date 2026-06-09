@@ -44,6 +44,8 @@ app.post('/api/chat', (req, res) => {
     apiRes.setEncoding('utf-8');
     apiRes.on('data', (chunk) => { body += chunk; });
     apiRes.on('end', () => {
+      console.log('[DeepSeek] status:', apiRes.statusCode);
+      console.log('[DeepSeek] body:', body.substring(0, 500));
       try {
         const data = JSON.parse(body);
         res.json(data);
