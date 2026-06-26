@@ -51,16 +51,42 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Prompt集合.md",
+                "file": "游戏拆解/超凡双生.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Prompt集合"
+              "title": "超凡双生"
+            }
+          },
+          {
+            "id": "7c0ffc46425cd287",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "实习工作记录/01-日报/2026-06-25.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "2026-06-25"
+            }
+          },
+          {
+            "id": "d49a8a2f2afdb0bb",
+            "type": "leaf",
+            "state": {
+              "type": "excalidraw",
+              "state": {
+                "file": "Excalidraw/Nscamera改造.md"
+              },
+              "icon": "excalidraw-icon",
+              "title": "Nscamera改造"
             }
           }
         ],
-        "currentTab": 3
+        "currentTab": 5
       }
     ],
     "direction": "vertical"
@@ -117,7 +143,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 265.5
+    "width": 265.5,
+    "collapsed": true
   },
   "right": {
     "id": "fd0bf0133c32622f",
@@ -230,11 +257,27 @@
       "obsidian-excalidraw-plugin:New drawing": false
     }
   },
-  "active": "fb47146e152ccf2a",
+  "active": "d49a8a2f2afdb0bb",
   "lastOpenFiles": [
-    "CodeGuide.md",
+    "Excalidraw/Nscamera改造.md",
+    "images/Pasted Image 20260626101445_219.png",
+    "实习工作记录/01-日报/2026-06-25.md",
+    "游戏拆解/逸剑.md",
+    "游戏拆解/超凡双生.md",
     "Prompt集合.md",
+    "images/Pasted image 20260624160515.png",
+    "images/Pasted image 20260624160437.png",
+    "实习工作记录/01-日报/2026-06-24.md",
+    "CodeGuide.md",
+    "实习工作记录/01-日报/2026-06-23.md",
+    "实习工作记录/01-日报/2026-06-22.md",
+    "实习工作记录/01-日报/2026-06-18.md",
+    "实习工作记录/01-日报/2026-06-17.md",
+    "实习工作记录/01-日报/2026-06-16.md",
+    "实习工作记录/01-日报/2026-06-12.md",
     "实习工作记录/01-日报/2026-06-11.md",
+    "游戏拆解",
+    "新建文件夹",
     "实习工作记录/01-日报/2026-06-10.md",
     "实习工作记录/01-日报/2026-06-09.md",
     "assets/ue5-scenecapture/Pasted image 20260609093824.png",
@@ -250,26 +293,11 @@
     "images",
     "assets/ue5-scenecapture/Pasted image 20260609114151.png",
     "assets/ue5-scenecapture/Pasted image 20260609114037.png",
-    "assets/ue5-scenecapture/Pasted image 20260609113850.png",
-    "assets/ue5-scenecapture/Pasted image 20260609113740.png",
-    "assets/ue5-scenecapture/Pasted image 20260609095203.png",
     "个人网站文章/UE5多视口分屏与相机白名单实现.md",
     "个人网站文章/基于 SceneCapture 的多视口显隐方案.md",
     "实习工作记录/01-日报/2026-06-03.md",
     "实习工作记录/01-日报/2026-06-01.md",
-    "实习工作记录/01-日报/2026-05-25.md",
-    "实习工作记录/01-日报/2026-05-27.md",
-    "实习工作记录/01-日报/2026-06-04.md",
-    "实习工作记录/00-使用说明.md",
-    "实习工作记录/01-日报/2026-06-05.md",
-    "实习工作记录/01-日报/2026-05-26.md",
-    "实习工作记录/01-日报/2026-06-02.md",
-    "实习工作记录/01-日报/2026-05-28.md",
-    "个人网站文章/Unreal中如何实现多视口以及摄像机的白名单.md",
     "个人网站文章",
-    "实习工作记录/99-模板/日报模板.md",
-    "实习工作记录/99-模板/周总结模板.md",
-    "实习工作记录/99-模板/月度总结模板.md",
     "实习工作记录/99-模板",
     "实习工作记录/04-项目记录",
     "实习工作记录/03-月度总结",
@@ -277,8 +305,6 @@
     "实习工作记录/01-日报",
     "实习工作记录",
     "未命名.canvas",
-    "未命名.base",
-    "Excalidraw",
     "未命名 4.canvas",
     "未命名 3.canvas",
     "未命名 2.canvas",
