@@ -77,6 +77,18 @@
             "id": "d49a8a2f2afdb0bb",
             "type": "leaf",
             "state": {
+              "type": "excalidraw",
+              "state": {
+                "file": "Excalidraw/Nscamera改造.md"
+              },
+              "icon": "excalidraw-icon",
+              "title": "Nscamera改造"
+            }
+          },
+          {
+            "id": "a2ea6fe099e2d89b",
+            "type": "leaf",
+            "state": {
               "type": "markdown",
               "state": {
                 "file": "游戏拆解/超凡双生.md",
@@ -88,7 +100,7 @@
             }
           }
         ],
-        "currentTab": 5
+        "currentTab": 6
       }
     ],
     "direction": "vertical"
@@ -258,10 +270,13 @@
       "obsidian-excalidraw-plugin:New drawing": false
     }
   },
-  "active": "d49a8a2f2afdb0bb",
+  "active": "a2ea6fe099e2d89b",
   "lastOpenFiles": [
-    "游戏拆解/逸剑.md",
+    "Excalidraw/家里布局.md",
+    "Excalidraw/Drawing 2026-04-22 13.09.20.excalidraw.md",
+    "Excalidraw/Nscamera改造.md",
     "游戏拆解/超凡双生.md",
+    "游戏拆解/逸剑.md",
     "Prompt集合.md",
     "CodeGuide.md",
     "实习工作记录/01-日报/2026-07-10.md",
@@ -277,7 +292,6 @@
     "实习工作记录/01-日报/2026-06-29.md",
     "实习工作记录/01-日报/2026-06-26.md",
     "实习工作记录/01-日报/2026-06-25.md",
-    "Excalidraw/Nscamera改造.md",
     "images/Pasted Image 20260626101445_219.png",
     "images/Pasted image 20260624160515.png",
     "images/Pasted image 20260624160437.png",
@@ -288,10 +302,8 @@
     "实习工作记录/01-日报/2026-06-17.md",
     "实习工作记录/01-日报/2026-06-16.md",
     "实习工作记录/01-日报/2026-06-12.md",
-    "实习工作记录/01-日报/2026-06-11.md",
     "游戏拆解",
     "新建文件夹",
-    "实习工作记录/01-日报/2026-06-10.md",
     "assets/ue5-scenecapture/Pasted image 20260609093824.png",
     "images/PixPin_2026-06-11_09-27-45.png",
     "images/Pasted image 20260609140007.png",
