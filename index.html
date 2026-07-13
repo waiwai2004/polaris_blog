@@ -584,6 +584,29 @@
       min-height: 315px;
     }
 
+    .blog-cover {
+      height: 180px;
+      border-radius: 24px;
+      margin-bottom: 18px;
+      border: 1px solid rgba(255,255,255,.12);
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
+      box-shadow: inset 0 -60px 120px rgba(10, 4, 14, .16);
+    }
+
+    .blog-cover.beyond {
+      background-image:
+        linear-gradient(180deg, rgba(12, 7, 20, .04), rgba(12, 7, 20, .28)),
+        url("assets/blog/beyond-two-souls.png");
+    }
+
+    .blog-cover.yijian {
+      background-image:
+        linear-gradient(180deg, rgba(12, 7, 20, .04), rgba(12, 7, 20, .2)),
+        url("assets/blog/yijian-fengyunjue.png");
+    }
+
     .blog-meta {
       display: flex;
       gap: 10px;
@@ -1112,6 +1135,7 @@
 
           <div class="grid three">
             <article class="glass-card blog-card reveal">
+              <div class="blog-cover beyond"></div>
               <div class="blog-meta"><span>2026.07</span><span>游戏拆解</span><span>互动叙事</span></div>
               <h3>《超凡双生》游戏拆解</h3>
               <p>从视角、叙事顺序、人物关系、动作交互到哲学意味，拆一拆这款让我又喜欢又别扭的互动电影游戏。</p>
@@ -1119,6 +1143,7 @@
             </article>
 
             <article class="glass-card blog-card reveal">
+              <div class="blog-cover yijian"></div>
               <div class="blog-meta"><span>2026.07</span><span>游戏拆解</span><span>武侠</span></div>
               <h3>《逸剑风云决》游戏拆解</h3>
               <p>从蜃楼岛、主线、支线、锻造、技能深度和更新节奏几个方面，聊聊它为什么这么容易让人一直玩下去。</p>
